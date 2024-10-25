@@ -1,0 +1,24 @@
+if { [ info exists env(PBS_JOBFS) ] } {
+    set tmpdir_base $::env(PBS_JOBFS)
+} elseif { [ info exists env(TMPDIR) ] } {
+    set tmpdir_base $::env(TMPDIR)
+} else {
+    set tmpdir_base /tmp
+}
+
+prepend-path CONTAINER_OVERLAY_PATH $prefix/petsc-$tag.sqsh
+
+setenv CONTAINER_PATH $prefix/etc/base.sif
+setenv PETSC_DIR $prefix/$tag
+setenv PETSC_ARCH default
+
+### ML component of HCOLL is unhappy for some reason...
+setenv OMPI_MCA_coll ^holl
+
+### Capture OpenMPI runtime settings
+setenv HCOLL_ENABLE_MCAST 0
+setenv OMPI_MCA_orte_tmpdir_base $tmpdir_base
+setenv VT_MAX_FLUSHES 0
+setenv VT_PFORM_LDIR $tmpdir_base
+setenv UCC_LOG_LEVEL ERROR
+setenv UCC_TLS ^sharp

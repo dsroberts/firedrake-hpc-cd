@@ -1,0 +1,14 @@
+#%Module1.0
+set mymod [file normalize [info script]]
+set mydir [file dirname $mymod]
+
+set prefix __PYGPLATES_IN_CONTAINER_PATH__
+set tag __TAG__
+
+prepend-path PYTHONPATH $prefix/$tag/lib/__PY_VERSION__/site-packages
+
+if { !([ is-loaded firedrake ]) } {
+    module load firedrake/__FIREDRAKE_TAG__
+}
+
+source $mydir/pygplates-common

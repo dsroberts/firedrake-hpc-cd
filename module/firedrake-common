@@ -1,0 +1,40 @@
+prepend-path CONTAINER_OVERLAY_PATH $prefix/firedrake-$tag.sqsh
+prepend-path SINGULARITYENV_PREPEND_PATH $prefix/$tag/venv/bin
+prepend-path PATH $prefix-scripts/$tag
+
+setenv FIREDRAKE_BASE $prefix
+setenv FIREDRAKE_TAG $tag
+setenv VIRTUAL_ENV $prefix/$tag/venv
+
+if { [ info exists env(PBS_JOBFS) ] } {
+    set tmpdir_base $::env(PBS_JOBFS)
+} elseif { [ info exists env(TMPDIR) ] } {
+    set tmpdir_base $::env(TMPDIR)
+} else {
+    set tmpdir_base /tmp
+}
+
+setenv PYOP2_CACHE_DIR $tmpdir_base/pyop2
+setenv FIREDRAKE_TSFC_KERNEL_CACHE_DIR $tmpdir_base/tsfc
+setenv XDG_CACHE_HOME $tmpdir_base/xdg
+
+### Make PyOP2 build optimised kernels
+setenv PYOP2_LDFLAGS "-shared"
+setenv PYOP2_CFLAGS "-fPIC -O3 -xHost -std=gnu11 -fp-model=fast"
+setenv PYOP2_CXXFLAGS "-fPIC -O3 -xHost -fp-model=fast"
+setenv PYOP2_CC mpicc
+setenv PYOP2_CXX mpicxx
+
+### Ensure remote MPI tasks are launched from within the container
+setenv OMPI_MCA_orte_launch_agent $prefix-scripts/$tag/orted
+
+if { [ info exists env(MY_GADOPT) ] } {
+    if { [ file exists $::env(MY_GADOPT)/gadopt/__init__.py ] } {
+        prepend-path PYTHONPATH $::env(MY_GADOPT)
+    } else {
+        puts stderr "ERROR! gadopt/__init__.py not found at $::env(MY_GADOPT): using default G-ADOPT installation"
+        prepend-path PYTHONPATH $prefix/gadopt
+    }
+} else {
+    prepend-path PYTHONPATH $prefix/gadopt
+}

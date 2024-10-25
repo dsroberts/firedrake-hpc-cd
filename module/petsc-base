@@ -1,0 +1,10 @@
+#%Module1.0
+set mymod [file normalize [info script]]
+set mydir [file dirname $mymod]
+
+set prefix __APP_IN_CONTAINER_PATH__
+set tag __TAG__
+
+module load singularity __COMPILER_MODULE__
+
+source $mydir/petsc-common

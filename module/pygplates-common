@@ -1,0 +1,5 @@
+prepend-path CONTAINER_OVERLAY_PATH $prefix/pygplates-$tag.sqsh
+
+setenv GDAL_DATA $prefix/$tag/share/gdal
+setenv PROJ_DATA $prefix/$tag/share/proj
+setenv PROJ_NETWORK ON
