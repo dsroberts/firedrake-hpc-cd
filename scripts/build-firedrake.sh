@@ -23,26 +23,34 @@ if [[ ! -d "${PBS_JOBFS}/${APP_NAME}" ]]; then
     tar -xf "${BUILD_STAGE_DIR}/${APP_NAME}.tar"
 fi
 pushd "${APP_NAME}"
-export TAG=$( date +%Y%m%d )
+#export TAG=$( date +%Y%m%d )
+### Tag with date of commit
+export TAG=$( git show --no-patch --format=%cd --date=format:%Y%m%d )
 ### matches short commit length on github
 export GIT_COMMIT=$( git rev-parse --short=7 HEAD )
 export REPO_TAGS=( $( git tag --points-at HEAD ) )
 popd
 
-export APP_IN_CONTAINER_PATH="${APPS_PREFIX}/firedrake"
+export APP_BUILD_TAG=""
+### Add any/all build type (e.g. 64bit) tags here
+if [[ "${DO_64BIT}" ]]; then
+    export APP_BUILD_TAG=${APP_BUILD_TAG}"-64bit"
+fi
+
+export APP_IN_CONTAINER_PATH="${APPS_PREFIX}/${APP_NAME}${APP_BUILD_TAG}"
 export OVERLAY_EXTERNAL_PATH="${APP_IN_CONTAINER_PATH//\/g/"${OVERLAY_BASE}"}"
-export MODULE_FILE="${MODULE_PREFIX}/${APP_NAME}/${TAG}"
-export SQUASHFS_APP_DIR="${APP_NAME}-${TAG}"
+export MODULE_FILE="${MODULE_PREFIX}/${APP_NAME}${APP_BUILD_TAG}/${TAG}"
+export SQUASHFS_APP_DIR="${APP_NAME}${APP_BUILD_TAG}-${TAG}"
 
 ### 3.) Load dependent modules
 ### This path will not exist inside of the container
 if [[ -d "${MODULE_PREFIX}" ]]; then
     module use "${MODULE_PREFIX}"
-    module load petsc
+    module load petsc${APP_BUILD_TAG}
     ### Get petsc module name
     export PETSC_MODULE=$( module list -t | grep petsc )
     export PETSC_TAG="${PETSC_MODULE#*/}"
-    module unload petsc
+    module unload petsc${APP_BUILD_TAG}
 fi
 
 ### 4.) Define 'inner' function(s)
@@ -59,7 +67,13 @@ function inner1() {
     module load "${OMPI_MODULE}"
     module load "${PY_MODULE}"
 
-    export PETSC_DIR="${APPS_PREFIX}/petsc/${PETSC_TAG}"
+    if [[ "${DO_64BIT}" ]]; then
+        export OPTS_64BIT="--petsc-int-type int64"
+    else
+        export OPTS_64BIT=""
+    fi
+
+    export PETSC_DIR="${APPS_PREFIX}/petsc${APP_BUILD_TAG}/${PETSC_TAG}"
     export PETSC_ARCH=default
 
     export PYOP2_CACHE_DIR=/tmp/pyop2
@@ -69,7 +83,7 @@ function inner1() {
 
     ### i2.) Install
     cd "${APP_IN_CONTAINER_PATH}/${TAG}"
-    python${PY_VERSION} firedrake/scripts/firedrake-install --honour-petsc-dir --mpiexec=mpirun --mpicc=mpicc --mpicxx=mpicxx --mpif90=mpif90 --no-package-manager --venv-name venv
+    python${PY_VERSION} firedrake/scripts/firedrake-install --honour-petsc-dir --mpiexec=mpirun --mpicc=mpicc --mpicxx=mpicxx --mpif90=mpif90 --no-package-manager ${OPTS_64BIT} --venv-name venv
     source "${APP_IN_CONTAINER_PATH}/${TAG}/venv/bin/activate"
     pip3 install jupyterlab assess gmsh imageio jupytext openpyxl pandas pyvista[all] shapely pyroltrilinos siphash24 jupyterview xarray trame_jupyter_extension
     
@@ -135,7 +149,7 @@ if [[ -L "${APP_IN_CONTAINER_PATH}/${TAG}" ]]; then
 fi
 
 ### 7.) Extract source & dependent squashfs into overlay
-prep_overlay "${APPS_PREFIX}/petsc/petsc-${PETSC_TAG}.sqsh" "${SQUASHFS_PATH}/petsc-${PETSC_TAG}" "${OVERLAY_EXTERNAL_PATH%/*}/petsc/${PETSC_TAG}"
+prep_overlay "${APPS_PREFIX}/petsc${APP_BUILD_TAG}/petsc-${PETSC_TAG}.sqsh" "${SQUASHFS_PATH}/petsc${APP_BUILD_TAG}-${PETSC_TAG}" "${OVERLAY_EXTERNAL_PATH%/*}/petsc${APP_BUILD_TAG}/${PETSC_TAG}"
 
 mkdir -p "${OVERLAY_EXTERNAL_PATH}/${TAG}"
 mv "${APP_NAME}" "${OVERLAY_EXTERNAL_PATH}/${TAG}"
@@ -173,16 +187,16 @@ cp "${APP_NAME}.sqsh" "${APP_IN_CONTAINER_PATH}/${APP_NAME}-${TAG}.sqsh"
 
 mkdir -p "${MODULE_FILE%/*}"
 copy_and_replace "${here}/../module/${APP_NAME}-base" "${MODULE_FILE}" APP_IN_CONTAINER_PATH COMPILER_MODULE TAG PETSC_MODULE
-copy_and_replace "${here}/../module/version-base" "${MODULE_PREFIX}/${APP_NAME}/.version" TAG
-cp               "${here}/../module/${APP_NAME}-common" "${MODULE_PREFIX}/${APP_NAME}"
+copy_and_replace "${here}/../module/version-base" "${MODULE_FILE%/*}/.version" TAG
+cp               "${here}/../module/${APP_NAME}-common" "${MODULE_FILE%/*}"
 
-if [[ ! -e "${MODULE_PREFIX}/${APP_NAME}/.modulerc" ]]; then
-    echo '#%Module1.0' > "${MODULE_PREFIX}/${APP_NAME}/.modulerc"
-    echo ''           >> "${MODULE_PREFIX}/${APP_NAME}/.modulerc"
+if [[ ! -e "${MODULE_FILE%/*}/.modulerc" ]]; then
+    echo '#%Module1.0' > "${MODULE_FILE%/*}/.modulerc"
+    echo ''           >> "${MODULE_FILE%/*}/.modulerc"
 fi
-echo module-version "${APP_NAME}/${TAG}" "${GIT_COMMIT}" >> "${MODULE_PREFIX}/${APP_NAME}/.modulerc"
+echo module-version "${APP_NAME}${APP_BUILD_TAG}/${TAG}" "${GIT_COMMIT}" >> "${MODULE_FILE%/*}/.modulerc"
 for tag in "${REPO_TAGS[@]}"; do
-    echo module-version "${APP_NAME}/${TAG}" "${tag}" >> "${MODULE_PREFIX}/${APP_NAME}/.modulerc"
+    echo module-version "${APP_NAME}${APP_BUILD_TAG}/${TAG}" "${tag}" >> "${MODULE_FILE%/*}/.modulerc"
 done
 
 mkdir -p "${APP_IN_CONTAINER_PATH}-scripts/${TAG}/overrides"
