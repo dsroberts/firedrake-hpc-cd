@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eu
 ### Recommended PBS job
-### qsub -I -lncpus=1,mem=16GB,walltime=1:00:00,jobfs=100GB,storage=gdata/xd2+scratch/xd2+gdata/vo05+scratch/vo05 -q copyq
+### qsub -I -lncpus=1,mem=16GB,walltime=1:00:00,jobfs=100GB,storage=gdata/xd2+scratch/xd2+gdata/fp50 -q copyq
 ###
 ### Use github action to checkout out firedrake repo, tar it up and
 ### copy to gadi
@@ -85,7 +85,7 @@ function inner1() {
     cd "${APP_IN_CONTAINER_PATH}/${TAG}"
     python${PY_VERSION} firedrake/scripts/firedrake-install --honour-petsc-dir --mpiexec=mpirun --mpicc=mpicc --mpicxx=mpicxx --mpif90=mpif90 --no-package-manager ${OPTS_64BIT} --venv-name venv
     source "${APP_IN_CONTAINER_PATH}/${TAG}/venv/bin/activate"
-    pip3 install jupyterlab assess gmsh imageio jupytext openpyxl pandas pyvista[all] shapely pyroltrilinos siphash24 jupyterview xarray trame_jupyter_extension
+    pip3 install jupyterlab assess gmsh imageio jupytext openpyxl pandas pyvista[all] shapely pyroltrilinos siphash24 jupyterview xarray trame_jupyter_extension pygplates
     
     ### i3.) Installation repair
     ###    a.) Link in entire python3 build - <Firedrake specific>
@@ -206,5 +206,8 @@ for i in "${SQUASHFS_PATH}/${SQUASHFS_APP_DIR}"/venv/bin/*; do
     ln -s launcher.sh "${APP_IN_CONTAINER_PATH}-scripts/${TAG}/${i##*/}"
 done
 
-### 11.) Anything else?
+### 11.) Permissions
+fix_apps_perms "${MODULE_FILE%/*}" "${APP_IN_CONTAINER_PATH}" "${APP_IN_CONTAINER_PATH}"-scripts
+
+### 12.) Anything else?
 singularity -s exec --bind "${bind_str}" --overlay="${APP_IN_CONTAINER_PATH}/${APP_NAME}-${TAG}.sqsh" "${BUILD_CONTAINER_PATH}/base.sif" "${this_script}" --inner2

@@ -155,7 +155,7 @@ done
 bind_str="${bind_str:: -1}"
 
 module load singularity
-singularity -s exec --bind "${bind_str},${OVERLAY_BASE}:/g" "${CONTAINER_PATH}/base.sif" "${this_script}" --inner
+singularity -s exec --bind "${bind_str},${OVERLAY_BASE}:/g" "${BUILD_CONTAINER_PATH}/base.sif" "${this_script}" --inner
 
 ### 9.) Create squashfs
 mkdir -p "${SQUASHFS_PATH}"

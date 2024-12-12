@@ -9,8 +9,8 @@ export MKL_MODULE=intel-mkl/"${mkl_version}"
 py_ver="${PY_MODULE##*/}"
 export PY_VERSION="${py_ver%.*}"
 
-export APPS_PREFIX=/g/data/xd2/dr4292/apps
-export MODULE_PREFIX=/g/data/xd2/dr4292/apps/Modulefiles
+export APPS_PREFIX=/g/data/fp50/apps
+export MODULE_PREFIX=/g/data/fp50/modules
 export SQUASHFS_PATH="${PBS_JOBFS}/squashfs-root/opt"
 export OVERLAY_BASE="${PBS_JOBFS}/overlay"
 ### N.B. CONTAINER_PATH is set by petsc module, so we need a different
@@ -19,5 +19,7 @@ export OVERLAY_BASE="${PBS_JOBFS}/overlay"
 export BUILD_CONTAINER_PATH="${APPS_PREFIX}/petsc/etc"
 
 export BUILD_STAGE_DIR=/home/563/dr4292
+
+export WRITERS_GROUP=xd2
 
 declare -a bind_dirs=( "/etc" "/half-root" "/local" "/ram" "/run" "/system" "/usr" "/var/lib/sss" "/var/lib/rpm" "/var/run/munge" "/sys/fs/cgroup" "/iointensive" )

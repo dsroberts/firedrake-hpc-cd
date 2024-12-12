@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eu
 ### Recommended PBS job
-### qsub -I -lncpus=12,mem=48GB,walltime=2:00:00,jobfs=100GB,storage=gdata/xd2+scratch/xd2+gdata/vo05+scratch/vo05...
+### qsub -I -lncpus=12,mem=48GB,walltime=2:00:00,jobfs=100GB,storage=gdata/xd2+scratch/xd2+gdata/fp50...
 ###
 ### Use github action to checkout out petsc repo, tar it up and
 ### copy to gadi
@@ -71,7 +71,7 @@ function inner() {
     fi
 
     cd "${APP_IN_CONTAINER_PATH}/${TAG}"
-    python${PY_VERSION} ./configure PETSC_DIR="${APP_IN_CONTAINER_PATH}/${TAG}" PETSC_ARCH=default --with-fc=mpif90 COPTFLAGS='-O3 -g -xCASCADELAKE' CXXOPTFLAGS='-O3 -g -xCASCADELAKE' FOPTFLAGS='-O3 -g -xCASCADELAKE' ${OPTS_64BIT} --download-suitesparse --with-cxx=mpicxx --with-hwloc-dir=/usr --with-zlib --download-pastix --with-cc=mpicc --download-mumps --download-hdf5 --with-mpiexec=mpirun --download-hypre --download-netcdf --download-pnetcdf --download-superlu_dist --with-shared-libraries=1 --with-c2html=0 --with-fortran-bindings=0 --download-metis --download-ptscotch --with-debugging=0 --download-bison --with-scalapack-include="${MKLROOT}/include" --with-scalapack-lib="-lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_openmpi_lp64 -lpthread -lm -ldl" --with-make-np="${PBS_NCPUS}"
+    python${PY_VERSION} ./configure PETSC_DIR="${APP_IN_CONTAINER_PATH}/${TAG}" PETSC_ARCH=default --with-fc=mpif90 COPTFLAGS='-O2 -g -xCASCADELAKE' CXXOPTFLAGS='-O2 -g -xCASCADELAKE' FOPTFLAGS='-O2 -g -xCASCADELAKE' ${OPTS_64BIT} --download-suitesparse --with-cxx=mpicxx --with-hwloc-dir=/usr --with-zlib --download-pastix --with-cc=mpicc --download-mumps --download-hdf5 --with-mpiexec=mpirun --download-hypre --download-netcdf --download-pnetcdf --download-superlu_dist --with-shared-libraries=1 --with-c2html=0 --with-fortran-bindings=0 --download-metis --download-ptscotch --with-debugging=0 --download-bison --with-scalapack-include="${MKLROOT}/include" --with-scalapack-lib="-lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_openmpi_lp64 -lpthread -lm -ldl" --with-make-np="${PBS_NCPUS}"
     make PETSC_DIR="${APP_IN_CONTAINER_PATH}/${TAG}" PETSC_ARCH=default all
 
     ### i3.) Installation repair
@@ -135,4 +135,7 @@ for tag in "${REPO_TAGS[@]}"; do
     echo module-version "${APP_NAME}${APP_BUILD_TAG}/${TAG}" "${tag}" >> "${MODULE_FILE%/*}/.modulerc"
 done
 
-### 11.) Anything else?
+### 11.) Permissions
+fix_apps_perms "${MODULE_FILE%/*}" "${APP_IN_CONTAINER_PATH}"
+
+### 12.) Anything else?

@@ -62,6 +62,11 @@ while [[ $# -gt 0 ]]; do
             $debug "fd_singularity_singularity_path="${SINGULARITY_BINARY_PATH}
             shift 2
             ;;
+        "--fd_virtual_env_path")
+            export VIRTUAL_ENV="${2}"
+            $debug "fd_virtual_env_path="${VIRTUAL_ENV}
+            shift 2
+            ;;
         *)
             PROG_ARGS+=( "${1}" )
             shift
