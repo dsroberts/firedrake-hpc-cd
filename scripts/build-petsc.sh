@@ -9,7 +9,7 @@ set -eu
 ### ==== SECTIONS =====
 ###
 ### 1.) Intialisation
-this_script=$( realpath $0 )
+this_script=$(realpath $0)
 here="${this_script%/*}"
 an="${this_script##*/}"
 an="${an#*-}"
@@ -25,10 +25,10 @@ fi
 pushd "${APP_NAME}"
 #export TAG=$( date +%Y%m%d )
 ### Tag with date of commit
-export TAG=$( git show --no-patch --format=%cd --date=format:%Y%m%d )
+export TAG=$(git show --no-patch --format=%cd --date=format:%Y%m%d)
 ### matches short commit length on github
-export GIT_COMMIT=$( git rev-parse --short=7 HEAD )
-export REPO_TAGS=( $( git tag --points-at HEAD ) )
+export GIT_COMMIT=$(git rev-parse --short=7 HEAD)
+export REPO_TAGS=($(git tag --points-at HEAD))
 popd
 
 export APP_BUILD_TAG=""
@@ -39,7 +39,7 @@ fi
 
 export APP_IN_CONTAINER_PATH="${APPS_PREFIX}/${APP_NAME}${APP_BUILD_TAG}"
 export OVERLAY_EXTERNAL_PATH="${APP_IN_CONTAINER_PATH//\/g/"${OVERLAY_BASE}"}"
-export MODULE_FILE="${MODULE_PREFIX}/${APP_NAME}${APP_BUILD_TAG}/${TAG}"
+export MODULE_FILE="${MODULE_PREFIX}/${APP_NAME}${APP_BUILD_TAG}/${TAG}${VERSION_TAG}"
 export SQUASHFS_APP_DIR="${APP_NAME}${APP_BUILD_TAG}-${TAG}"
 
 declare -a MODULE_USE_PATHS=()
@@ -71,7 +71,10 @@ function inner() {
     fi
 
     cd "${APP_IN_CONTAINER_PATH}/${TAG}"
-    python${PY_VERSION} ./configure PETSC_DIR="${APP_IN_CONTAINER_PATH}/${TAG}" PETSC_ARCH=default --with-fc=mpif90 COPTFLAGS='-O2 -g -xCASCADELAKE' CXXOPTFLAGS='-O2 -g -xCASCADELAKE' FOPTFLAGS='-O2 -g -xCASCADELAKE' ${OPTS_64BIT} --download-suitesparse --with-cxx=mpicxx --with-hwloc-dir=/usr --with-zlib --download-pastix --with-cc=mpicc --download-mumps --download-hdf5 --with-mpiexec=mpirun --download-hypre --download-netcdf --download-pnetcdf --download-superlu_dist --with-shared-libraries=1 --with-c2html=0 --with-fortran-bindings=0 --download-metis --download-ptscotch --with-debugging=0 --download-bison --with-scalapack-include="${MKLROOT}/include" --with-scalapack-lib="-lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_openmpi_lp64 -lpthread -lm -ldl" --with-make-np="${PBS_NCPUS}"
+
+    get_scalapack_flags
+
+    python${PY_VERSION} ./configure PETSC_DIR="${APP_IN_CONTAINER_PATH}/${TAG}" PETSC_ARCH=default --with-fc=mpif90 COPTFLAGS="${COMPILER_OPT_FLAGS}" CXXOPTFLAGS="${COMPILER_OPT_FLAGS}" FOPTFLAGS="${COMPILER_OPT_FLAGS}" ${OPTS_64BIT} --download-suitesparse --with-cxx=mpicxx --with-hwloc-dir=/usr --with-zlib --download-pastix --with-cc=mpicc --download-mumps --download-hdf5 --with-mpiexec=mpirun --download-hypre --download-netcdf --download-pnetcdf --download-superlu_dist --with-shared-libraries=1 --with-c2html=0 --with-fortran-bindings=0 --download-metis --download-ptscotch --with-debugging=0 --download-bison ${SCALAPACK_FLAGS} --with-make-np="${PBS_NCPUS}"
     make PETSC_DIR="${APP_IN_CONTAINER_PATH}/${TAG}" PETSC_ARCH=default all
 
     ### i3.) Installation repair
@@ -104,7 +107,7 @@ for bind_dir in "${bind_dirs[@]}"; do
     [[ -d "${bind_dir}" ]] && bind_str="${bind_str}${bind_dir},"
 done
 ### Remove trailing comma
-bind_str="${bind_str:: -1}"
+bind_str="${bind_str::-1}"
 
 module load singularity
 singularity -s exec --bind "${bind_str},${OVERLAY_BASE}:/g" "${BUILD_CONTAINER_PATH}/base.sif" "${this_script}" --inner
@@ -117,23 +120,29 @@ mksquashfs squashfs-root "${APP_NAME}.sqsh" -no-fragments -no-duplicates -no-spa
 
 ### 10.) Create symlinks & modules
 mkdir -p "${APP_IN_CONTAINER_PATH}"
-ln -s "/opt/${SQUASHFS_APP_DIR}" "${APP_IN_CONTAINER_PATH}/${TAG}"
+ln -sf "/opt/${SQUASHFS_APP_DIR}" "${APP_IN_CONTAINER_PATH}/${TAG}"
 
-cp "${APP_NAME}.sqsh" "${APP_IN_CONTAINER_PATH}/${APP_NAME}-${TAG}.sqsh"
+cp "${APP_NAME}.sqsh" "${APP_IN_CONTAINER_PATH}/${APP_NAME}-${TAG}${VERSION_TAG}.sqsh"
 
 mkdir -p "${MODULE_FILE%/*}"
-copy_and_replace "${here}/../module/${APP_NAME}-base" "${MODULE_FILE}" APP_IN_CONTAINER_PATH COMPILER_MODULE TAG
-copy_and_replace "${here}/../module/version-base" "${MODULE_FILE%/*}/.version" TAG
+copy_and_replace "${here}/../module/${APP_NAME}-base" "${MODULE_FILE}" APP_IN_CONTAINER_PATH COMPILER_MODULE TAG VERSION_TAG PYOP2_COMPILER_OPT_FLAGS
+if [[ -z "${VERSION_TAG}" ]]; then
+    copy_and_replace "${here}/../module/version-base" "${MODULE_FILE%/*}/.version" TAG
+fi
 cp "${here}/../module/${APP_NAME}-common" "${MODULE_FILE%/*}"
 
 if [[ ! -e "${MODULE_FILE%/*}"/.modulerc ]]; then
-    echo '#%Module1.0' > "${MODULE_FILE%/*}/.modulerc"
-    echo ''           >> "${MODULE_FILE%/*}/.modulerc"
+    echo '#%Module1.0' >"${MODULE_FILE%/*}/.modulerc"
+    echo '' >>"${MODULE_FILE%/*}/.modulerc"
 fi
-echo module-version "${APP_NAME}${APP_BUILD_TAG}/${TAG}" "${GIT_COMMIT}" >> "${MODULE_FILE%/*}/.modulerc"
+
+echo module-version "${APP_NAME}${APP_BUILD_TAG}/${TAG}${VERSION_TAG}" "${GIT_COMMIT}${VERSION_TAG}" >>"${MODULE_FILE%/*}/.modulerc"
 for tag in "${REPO_TAGS[@]}"; do
-    echo module-version "${APP_NAME}${APP_BUILD_TAG}/${TAG}" "${tag}" >> "${MODULE_FILE%/*}/.modulerc"
+    echo module-version "${APP_NAME}${APP_BUILD_TAG}/${TAG}${VERSION_TAG}" "${tag}${VERSION_TAG}" >>"${MODULE_FILE%/*}/.modulerc"
 done
+if [[ "${VERSION_TAG}" ]]; then
+    echo module-version "${APP_NAME}${APP_BUILD_TAG}/${TAG}${VERSION_TAG}" "${VERSION_TAG:1}" >>"${MODULE_FILE%/*}/.modulerc"
+fi
 
 ### 11.) Permissions
 fix_apps_perms "${MODULE_FILE%/*}" "${APP_IN_CONTAINER_PATH}"

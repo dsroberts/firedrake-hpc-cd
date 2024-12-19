@@ -4,6 +4,9 @@ set mydir [file dirname $mymod]
 
 set prefix __APP_IN_CONTAINER_PATH__
 set tag __TAG__
+set version_tag "__VERSION_TAG__"
+
+set pyop2_compiler_opt_flags __PYOP2_COMPILER_OPT_FLAGS__
 
 module load singularity __COMPILER_MODULE__
 

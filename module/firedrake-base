@@ -5,6 +5,9 @@ set mydir [file dirname $mymod]
 set prefix __APP_IN_CONTAINER_PATH__
 set tag __TAG__
 
-module load singularity __COMPILER_MODULE__ __PETSC_MODULE__
+module load singularity
+if { ! [ is-loaded petsc ] } {
+    module load __PETSC_MODULE__
+}
 
 source $mydir/firedrake-common

@@ -6,11 +6,18 @@ if { [ info exists env(PBS_JOBFS) ] } {
     set tmpdir_base /tmp
 }
 
-prepend-path CONTAINER_OVERLAY_PATH $prefix/petsc-$tag.sqsh
+prepend-path CONTAINER_OVERLAY_PATH $prefix/petsc-$tag$version_tag.sqsh
 
 setenv CONTAINER_PATH $prefix/etc/base.sif
 setenv PETSC_DIR $prefix/$tag
 setenv PETSC_ARCH default
+
+### Make PyOP2 build optimised kernels
+setenv PYOP2_LDFLAGS "-shared"
+setenv PYOP2_CFLAGS "$pyop2_compiler_opt_flags -std=gnu11"
+setenv PYOP2_CXXFLAGS "$pyop2_compiler_opt_flags"
+setenv PYOP2_CC mpicc
+setenv PYOP2_CXX mpicxx
 
 ### ML component of HCOLL is unhappy for some reason...
 setenv OMPI_MCA_coll ^holl

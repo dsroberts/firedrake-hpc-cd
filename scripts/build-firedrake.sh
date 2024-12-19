@@ -9,7 +9,7 @@ set -eu
 ### ==== SECTIONS =====
 ###
 ### 1.) Intialisation
-this_script=$( realpath $0 )
+this_script=$(realpath $0)
 here="${this_script%/*}"
 an="${this_script##*/}"
 an="${an#*-}"
@@ -25,10 +25,10 @@ fi
 pushd "${APP_NAME}"
 #export TAG=$( date +%Y%m%d )
 ### Tag with date of commit
-export TAG=$( git show --no-patch --format=%cd --date=format:%Y%m%d )
+export TAG=$(git show --no-patch --format=%cd --date=format:%Y%m%d)
 ### matches short commit length on github
-export GIT_COMMIT=$( git rev-parse --short=7 HEAD )
-export REPO_TAGS=( $( git tag --points-at HEAD ) )
+export GIT_COMMIT=$(git rev-parse --short=7 HEAD)
+export REPO_TAGS=($(git tag --points-at HEAD))
 popd
 
 export APP_BUILD_TAG=""
@@ -48,7 +48,7 @@ if [[ -d "${MODULE_PREFIX}" ]]; then
     module use "${MODULE_PREFIX}"
     module load petsc${APP_BUILD_TAG}
     ### Get petsc module name
-    export PETSC_MODULE=$( module list -t | grep petsc )
+    export PETSC_MODULE=$(module list -t | grep petsc)
     export PETSC_TAG="${PETSC_MODULE#*/}"
     module unload petsc${APP_BUILD_TAG}
 fi
@@ -86,13 +86,13 @@ function inner1() {
     python${PY_VERSION} firedrake/scripts/firedrake-install --honour-petsc-dir --mpiexec=mpirun --mpicc=mpicc --mpicxx=mpicxx --mpif90=mpif90 --no-package-manager ${OPTS_64BIT} --venv-name venv
     source "${APP_IN_CONTAINER_PATH}/${TAG}/venv/bin/activate"
     pip3 install jupyterlab assess gmsh imageio jupytext openpyxl pandas pyvista[all] shapely pyroltrilinos siphash24 jupyterview xarray trame_jupyter_extension pygplates
-    
+
     ### i3.) Installation repair
     ###    a.) Link in entire python3 build - <Firedrake specific>
     ln -s "${PYTHON3_BASE}/lib/libpython3.so" venv/lib
     ln -s "${PYTHON3_BASE}/lib/libpython${PY_VERSION}.so" venv/lib
     ln -s "${PYTHON3_BASE}/lib/libpython${PY_VERSION}.so.1.0" venv/lib
-    for i in "${PYTHON3_BASE}/lib/python${PY_VERSION}"/*; do 
+    for i in "${PYTHON3_BASE}/lib/python${PY_VERSION}"/*; do
         [[ ! -e "venv/lib/python${PY_VERSION}/${i##*/}" ]] && ln -s "${i}" "venv/lib/python${PY_VERSION}/${i##*/}"
     done
     for i in "${PYTHON3_BASE}/include/python${PY_VERSION}"/*; do
@@ -112,7 +112,7 @@ function inner1() {
     ###    d.) Link in entire OpenMPI build - <Firedrake specific>
     rm venv/bin/mpi{exec,cc,cxx,f90}
     module load "${OMPI_MODULE}"
-    for i in $( find "${OPENMPI_BASE}/" ! -type d ); do
+    for i in $(find "${OPENMPI_BASE}/" ! -type d); do
         f="${i//$OPENMPI_BASE\//}"
         mkdir -p "venv/${f%/*}"
         ln -sf ${i} "venv/${f}"
@@ -160,7 +160,7 @@ for bind_dir in "${bind_dirs[@]}"; do
     [[ -d "${bind_dir}" ]] && bind_str="${bind_str}${bind_dir},"
 done
 ### Remove trailing comma
-bind_str="${bind_str:: -1}"
+bind_str="${bind_str::-1}"
 
 module load singularity
 singularity -s exec --bind "${bind_str},${OVERLAY_BASE}:/g" "${BUILD_CONTAINER_PATH}/base.sif" "${this_script}" --inner
@@ -174,7 +174,7 @@ rpm2cpio mesa-dri-drivers-23.1.4-3.el8_10.x86_64.rpm | cpio -idmV
 mv usr/lib64/dri "${SQUASHFS_PATH}/${SQUASHFS_APP_DIR}"
 
 wget https://dl.rockylinux.org/pub/rocky/8/AppStream/x86_64/os/Packages/x/xorg-x11-server-Xvfb-1.20.11-24.el8_10.x86_64.rpm
-rpm2cpio xorg-x11-server-Xvfb-1.20.11-24.el8_10.x86_64.rpm  | cpio -idmV
+rpm2cpio xorg-x11-server-Xvfb-1.20.11-24.el8_10.x86_64.rpm | cpio -idmV
 mv usr/bin/Xvfb "${SQUASHFS_PATH}/${SQUASHFS_APP_DIR}/venv/bin"
 
 mksquashfs squashfs-root "${APP_NAME}.sqsh" -no-fragments -no-duplicates -no-sparse -no-exports -no-recovery -noI -noD -noF -noX -processors 8
@@ -188,15 +188,15 @@ cp "${APP_NAME}.sqsh" "${APP_IN_CONTAINER_PATH}/${APP_NAME}-${TAG}.sqsh"
 mkdir -p "${MODULE_FILE%/*}"
 copy_and_replace "${here}/../module/${APP_NAME}-base" "${MODULE_FILE}" APP_IN_CONTAINER_PATH COMPILER_MODULE TAG PETSC_MODULE
 copy_and_replace "${here}/../module/version-base" "${MODULE_FILE%/*}/.version" TAG
-cp               "${here}/../module/${APP_NAME}-common" "${MODULE_FILE%/*}"
+cp "${here}/../module/${APP_NAME}-common" "${MODULE_FILE%/*}"
 
 if [[ ! -e "${MODULE_FILE%/*}/.modulerc" ]]; then
-    echo '#%Module1.0' > "${MODULE_FILE%/*}/.modulerc"
-    echo ''           >> "${MODULE_FILE%/*}/.modulerc"
+    echo '#%Module1.0' >"${MODULE_FILE%/*}/.modulerc"
+    echo '' >>"${MODULE_FILE%/*}/.modulerc"
 fi
-echo module-version "${APP_NAME}${APP_BUILD_TAG}/${TAG}" "${GIT_COMMIT}" >> "${MODULE_FILE%/*}/.modulerc"
+echo module-version "${APP_NAME}${APP_BUILD_TAG}/${TAG}" "${GIT_COMMIT}" >>"${MODULE_FILE%/*}/.modulerc"
 for tag in "${REPO_TAGS[@]}"; do
-    echo module-version "${APP_NAME}${APP_BUILD_TAG}/${TAG}" "${tag}" >> "${MODULE_FILE%/*}/.modulerc"
+    echo module-version "${APP_NAME}${APP_BUILD_TAG}/${TAG}" "${tag}" >>"${MODULE_FILE%/*}/.modulerc"
 done
 
 mkdir -p "${APP_IN_CONTAINER_PATH}-scripts/${TAG}/overrides"

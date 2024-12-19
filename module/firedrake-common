@@ -18,13 +18,6 @@ setenv PYOP2_CACHE_DIR $tmpdir_base/pyop2
 setenv FIREDRAKE_TSFC_KERNEL_CACHE_DIR $tmpdir_base/tsfc
 setenv XDG_CACHE_HOME $tmpdir_base/xdg
 
-### Make PyOP2 build optimised kernels
-setenv PYOP2_LDFLAGS "-shared"
-setenv PYOP2_CFLAGS "-fPIC -O3 -xHost -std=gnu11 -fp-model=fast"
-setenv PYOP2_CXXFLAGS "-fPIC -O3 -xHost -fp-model=fast"
-setenv PYOP2_CC mpicc
-setenv PYOP2_CXX mpicxx
-
 ### Ensure remote MPI tasks are launched from within the container
 setenv OMPI_MCA_orte_launch_agent $prefix-scripts/$tag/orted
 
