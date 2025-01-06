@@ -11,15 +11,19 @@ set -eu
 ### 1.) Intialisation
 this_script=$(realpath $0)
 here="${this_script%/*}"
-an="${this_script##*/}"
-an="${an#*-}"
-export APP_NAME="${an%.*}"
-source "${here}/build-config.sh"
+export APP_NAME="petsc"
+source "${here}/identify-system.sh"
+
+### Load global definitions
 source "${here}/functions.sh"
 
+### Load machine-specific definitions
+[[ -e "${here}/${FD_SYSTEM}/build-config.sh" ]] && source "${here}/${FD_SYSTEM}/build-config.sh"
+[[ -e "${here}/${FD_SYSTEM}/functions.sh" ]]    && source "${here}/${FD_SYSTEM}/functions.sh"
+
 ### 2.) Extract repo and gather commit/tag data
-cd "${PBS_JOBFS}"
-if [[ ! -d "${PBS_JOBFS}/${APP_NAME}" ]]; then
+cd "${EXTRACT_DIR}"
+if [[ ! -d "${EXTRACT_DIR}/${APP_NAME}" ]]; then
     tar -xf "${BUILD_STAGE_DIR}/${APP_NAME}.tar"
 fi
 pushd "${APP_NAME}"
@@ -42,8 +46,6 @@ export OVERLAY_EXTERNAL_PATH="${APP_IN_CONTAINER_PATH//\/g/"${OVERLAY_BASE}"}"
 export MODULE_FILE="${MODULE_PREFIX}/${APP_NAME}${APP_BUILD_TAG}/${TAG}${VERSION_TAG}"
 export SQUASHFS_APP_DIR="${APP_NAME}${APP_BUILD_TAG}-${TAG}"
 
-declare -a MODULE_USE_PATHS=()
-
 ### 3.) Load dependent modules
 ### 4.) Define 'inner' function(s)
 function inner() {
@@ -53,14 +55,12 @@ function inner() {
         module use ${p}
     done
 
-    module load cmake/3.24.2
-    ### pnetcdf will not compile against oneAPI fortran compiler
-    ### with system autoconf - see https://community.intel.com/t5/Intel-Fortran-Compiler/ifx-2021-1-beta04-HPC-Toolkit-build-error-with-loopopt/td-p/1184181
-    module load autoconf/2.72
+    for m in "${EXTRA_MODULES[@]}"; do
+        module load ${m}
+    done
 
     module load "${COMPILER_MODULE}"
-    module load "${MKL_MODULE}"
-    module load "${OMPI_MODULE}"
+    module load "${MPI_MODULE}"
     module load "${PY_MODULE}"
 
     ### i2.) Install
@@ -79,7 +79,9 @@ function inner() {
 
     ### i3.) Installation repair
     ###    a.) Resolve all shared object links
-    resolve_libs "${APP_IN_CONTAINER_PATH}/${TAG}" "${APP_IN_CONTAINER_PATH}/${TAG}"
+    if [[ $( type -t __petsc_post_build_in_container_hook ) == function ]]; then
+        __petsc_post_build_in_container_hook
+    fi
 
 }
 
@@ -109,7 +111,7 @@ done
 ### Remove trailing comma
 bind_str="${bind_str::-1}"
 
-module load singularity
+module load singularity/"${SINGULARITY_MODULE}"
 singularity -s exec --bind "${bind_str},${OVERLAY_BASE}:/g" "${BUILD_CONTAINER_PATH}/base.sif" "${this_script}" --inner
 
 ### 9.) Create squashfs
@@ -125,11 +127,11 @@ ln -sf "/opt/${SQUASHFS_APP_DIR}" "${APP_IN_CONTAINER_PATH}/${TAG}"
 cp "${APP_NAME}.sqsh" "${APP_IN_CONTAINER_PATH}/${APP_NAME}-${TAG}${VERSION_TAG}.sqsh"
 
 mkdir -p "${MODULE_FILE%/*}"
-copy_and_replace "${here}/../module/${APP_NAME}-base" "${MODULE_FILE}" APP_IN_CONTAINER_PATH COMPILER_MODULE TAG VERSION_TAG PYOP2_COMPILER_OPT_FLAGS
+copy_and_replace "${here}/../module/${FD_SYSTEM}/${APP_NAME}-base" "${MODULE_FILE}" APP_IN_CONTAINER_PATH COMPILER_MODULE TAG VERSION_TAG PYOP2_COMPILER_OPT_FLAGS
 if [[ -z "${VERSION_TAG}" ]]; then
-    copy_and_replace "${here}/../module/version-base" "${MODULE_FILE%/*}/.version" TAG
+    copy_and_replace "${here}/../module/${FD_SYSTEM}/version-base" "${MODULE_FILE%/*}/.version" TAG
 fi
-cp "${here}/../module/${APP_NAME}-common" "${MODULE_FILE%/*}"
+cp "${here}/../module/${FD_SYSTEM}/${APP_NAME}-common" "${MODULE_FILE%/*}"
 
 if [[ ! -e "${MODULE_FILE%/*}"/.modulerc ]]; then
     echo '#%Module1.0' >"${MODULE_FILE%/*}/.modulerc"

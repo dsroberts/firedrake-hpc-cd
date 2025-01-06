@@ -1,6 +1,7 @@
-export OMPI_MODULE=openmpi/4.0.7
+export MPI_MODULE=openmpi/4.0.7
 ### Must have numpy - no reason not to use NCI-provided modules
 export PY_MODULE=python3/3.11.7
+export SINGULARITY_MODULE=""
 
 compiler_type=gcc
 compiler_version=14.2.0
@@ -50,9 +51,13 @@ export OVERLAY_BASE="${PBS_JOBFS}/overlay"
 ### variable inside the build scripts as some of them load & unload
 ### a petsc module.
 export BUILD_CONTAINER_PATH="${APPS_PREFIX}/petsc/etc"
-
 export BUILD_STAGE_DIR=/home/563/dr4292
-
 export WRITERS_GROUP=xd2
+export EXTRACT_DIR="${PBS_JOBFS}"
+
+### pnetcdf will not compile against oneAPI fortran compiler
+    ### with system autoconf - see https://community.intel.com/t5/Intel-Fortran-Compiler/ifx-2021-1-beta04-HPC-Toolkit-build-error-with-loopopt/td-p/1184181
+declare -a EXTRA_MODULES=( cmake/3.24.2 autoconf/2.72 "${MKL_MODULE}" )
+export EXTRA_MODULES
 
 declare -a bind_dirs=("/etc" "/half-root" "/local" "/ram" "/run" "/system" "/usr" "/var/lib/sss" "/var/lib/rpm" "/var/run/munge" "/sys/fs/cgroup" "/iointensive")
