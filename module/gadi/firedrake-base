@@ -5,7 +5,7 @@ set mydir [file dirname $mymod]
 set prefix __APP_IN_CONTAINER_PATH__
 set tag __TAG__
 
-module load singularity
+module load __SINGULARITY_MODULE__
 if { ! [ is-loaded petsc ] } {
     module load __PETSC_MODULE__
 }

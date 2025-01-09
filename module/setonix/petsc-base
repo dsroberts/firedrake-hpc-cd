@@ -1,0 +1,26 @@
+local prefix = "__APP_IN_CONTAINER_PATH__"
+local tag = "__TAG__"
+local version_tag = "__VERSION_TAG__"
+
+local pyop2_compiler_opt_flags = __PYOP2_COMPILER_OPT_FLAGS__
+
+load("__SINGULARITY_MODULE__")
+load("__COMPILER_MODULE__")
+load("__MPI_MODULE__")
+
+prepend_path("CONTAINER_OVERLAY_PATH",pathJoin(prefix,"petsc-" .. tag .. version_tag .. ".sqsh"))
+
+setenv("CONTAINER_PATH",pathJoin(prefix,"etc/base.sif"))
+setenv("PETSC_DIR",pathJoin(prefix,tag))
+setenv("PETSC_ARCH","default")
+
+-- Make PyOP2 build optimised kernels
+setenv("PYOP2_LDFLAGS","-shared")
+setenv("PYOP2_CFLAGS",pyop2_compiler_opt_flags .." -std=gnu11")
+setenv("PYOP2_CXXFLAGS",pyop2_compiler_opt_flags)
+setenv("PYOP2_CC", "mpicc")
+setenv("PYOP2_CXX", "mpicxx")
+
+setenv("MPICH_CC","gcc")
+setenv("MPICH_CXX","g++")
+setenv("MPICH_FC","gfortran")

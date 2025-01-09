@@ -2,28 +2,34 @@
 set -eu
 ### Recommended PBS job
 ### qsub -I -lncpus=1,mem=16GB,walltime=1:00:00,jobfs=100GB,storage=gdata/xd2+scratch/xd2+gdata/fp50 -q copyq
+### Recommended SLURM job
+### salloc -p work -n 1 -N 1 -c 1 -t 1:00:00 --mem 16G
 ###
 ### Use github action to checkout out firedrake repo, tar it up and
-### copy to gadi
+### copy to HPC system
 ###
 ### ==== SECTIONS =====
 ###
 ### 1.) Intialisation
+module purge
 this_script=$(realpath $0)
 here="${this_script%/*}"
-an="${this_script##*/}"
-an="${an#*-}"
-export APP_NAME="${an%.*}"
-source "${here}/build-config.sh"
+export APP_NAME="firedrake"
+source "${here}/identify-system.sh"
+
+### Load global definitions
 source "${here}/functions.sh"
 
+### Load machine-specific definitions
+[[ -e "${here}/${FD_SYSTEM}/build-config.sh" ]] && source "${here}/${FD_SYSTEM}/build-config.sh"
+[[ -e "${here}/${FD_SYSTEM}/functions.sh" ]] && source "${here}/${FD_SYSTEM}/functions.sh"
+
 ### 2.) Extract repo and gather commit/tag data
-cd "${PBS_JOBFS}"
-if [[ ! -d "${PBS_JOBFS}/${APP_NAME}" ]]; then
+cd "${EXTRACT_DIR}"
+if [[ ! -d "${EXTRACT_DIR}/${APP_NAME}" ]]; then
     tar -xf "${BUILD_STAGE_DIR}/${APP_NAME}.tar"
 fi
 pushd "${APP_NAME}"
-#export TAG=$( date +%Y%m%d )
 ### Tag with date of commit
 export TAG=$(git show --no-patch --format=%cd --date=format:%Y%m%d)
 ### matches short commit length on github
@@ -38,18 +44,30 @@ if [[ "${DO_64BIT}" ]]; then
 fi
 
 export APP_IN_CONTAINER_PATH="${APPS_PREFIX}/${APP_NAME}${APP_BUILD_TAG}"
-export OVERLAY_EXTERNAL_PATH="${APP_IN_CONTAINER_PATH//\/g/"${OVERLAY_BASE}"}"
-export MODULE_FILE="${MODULE_PREFIX}/${APP_NAME}${APP_BUILD_TAG}/${TAG}"
+export OVERLAY_EXTERNAL_PATH="${OVERLAY_BASE}/${APP_IN_CONTAINER_PATH#/*/}"
+export MODULE_FILE="${MODULE_PREFIX}/${APP_NAME}${APP_BUILD_TAG}/${TAG}${MODULE_SUFFIX}"
 export SQUASHFS_APP_DIR="${APP_NAME}${APP_BUILD_TAG}-${TAG}"
 
+for p in "${MODULE_USE_PATHS[@]}"; do
+    module use ${p}
+done
+
 ### 3.) Load dependent modules
-### This path will not exist inside of the container
-if [[ -d "${MODULE_PREFIX}" ]]; then
+### This path might not exist inside of the container
+if [[ -d "${MODULE_PREFIX}/petsc" ]]; then
+    if [[ $( type -t __firedrake_pre_petsc_version_check ) == function ]]; then
+        __firedrake_pre_petsc_version_check
+    fi
     module use "${MODULE_PREFIX}"
     module load petsc${APP_BUILD_TAG}
     ### Get petsc module name
-    export PETSC_MODULE=$(module list -t | grep petsc)
+    export PETSC_MODULE=$(module -t list 2>&1 | grep petsc)
     export PETSC_TAG="${PETSC_MODULE#*/}"
+    if [[ "${VERSION_TAG}" ]]; then
+        export PETSC_DIR_SUFFIX="${PETSC_TAG//$VERSION_TAG/}"
+    else
+        export PETSC_DIR_SUFFIX="${PETSC_TAG}"
+    fi
     module unload petsc${APP_BUILD_TAG}
 fi
 
@@ -57,15 +75,13 @@ fi
 function inner1() {
 
     ### i1.) Load modules & set environment
-    module load cmake/3.24.2
-    ### pnetcdf will not compile against oneAPI fortran compiler
-    ### with system autoconf - see https://community.intel.com/t5/Intel-Fortran-Compiler/ifx-2021-1-beta04-HPC-Toolkit-build-error-with-loopopt/td-p/1184181
-    module load autoconf/2.72
+    for m in "${EXTRA_MODULES[@]}"; do
+        module load ${m}
+    done
 
-    module load "${COMPILER_MODULE}"
-    module load "${MKL_MODULE}"
-    module load "${OMPI_MODULE}"
-    module load "${PY_MODULE}"
+    module load ${COMPILER_MODULE}
+    module load ${MPI_MODULE}
+    module load ${PY_MODULE}
 
     if [[ "${DO_64BIT}" ]]; then
         export OPTS_64BIT="--petsc-int-type int64"
@@ -73,7 +89,7 @@ function inner1() {
         export OPTS_64BIT=""
     fi
 
-    export PETSC_DIR="${APPS_PREFIX}/petsc${APP_BUILD_TAG}/${PETSC_TAG}"
+    export PETSC_DIR="${APPS_PREFIX}/petsc${APP_BUILD_TAG}/${PETSC_DIR_SUFFIX}"
     export PETSC_ARCH=default
 
     export PYOP2_CACHE_DIR=/tmp/pyop2
@@ -81,46 +97,19 @@ function inner1() {
     export XDG_CACHE_HOME=/tmp/xdg
     export FIREDRAKE_CI_TESTS=1
 
+    export MPIRUN="${MPIRUN:-mpirun}"
+    unset PYTHONPATH
+
     ### i2.) Install
     cd "${APP_IN_CONTAINER_PATH}/${TAG}"
-    python${PY_VERSION} firedrake/scripts/firedrake-install --honour-petsc-dir --mpiexec=mpirun --mpicc=mpicc --mpicxx=mpicxx --mpif90=mpif90 --no-package-manager ${OPTS_64BIT} --venv-name venv
+    python${PY_VERSION} firedrake/scripts/firedrake-install --honour-petsc-dir --mpiexec=${MPIRUN} --mpicc=$( which mpicc ) --mpicxx=$( which mpicxx ) --mpif90=$( which mpif90 ) --no-package-manager ${OPTS_64BIT} --venv-name venv
     source "${APP_IN_CONTAINER_PATH}/${TAG}/venv/bin/activate"
     pip3 install jupyterlab assess gmsh imageio jupytext openpyxl pandas pyvista[all] shapely pyroltrilinos siphash24 jupyterview xarray trame_jupyter_extension pygplates
 
     ### i3.) Installation repair
-    ###    a.) Link in entire python3 build - <Firedrake specific>
-    ln -s "${PYTHON3_BASE}/lib/libpython3.so" venv/lib
-    ln -s "${PYTHON3_BASE}/lib/libpython${PY_VERSION}.so" venv/lib
-    ln -s "${PYTHON3_BASE}/lib/libpython${PY_VERSION}.so.1.0" venv/lib
-    for i in "${PYTHON3_BASE}/lib/python${PY_VERSION}"/*; do
-        [[ ! -e "venv/lib/python${PY_VERSION}/${i##*/}" ]] && ln -s "${i}" "venv/lib/python${PY_VERSION}/${i##*/}"
-    done
-    for i in "${PYTHON3_BASE}/include/python${PY_VERSION}"/*; do
-        [[ ! -e "venv/include/python${PY_VERSION}/${i##*/}" ]] && ln -s "${i}" "venv/include/python${PY_VERSION}/${i##*/}"
-    done
-
-    ###    b.) Resolve all shared object links
-    resolve_libs "${APP_IN_CONTAINER_PATH}/${TAG}" "${APP_IN_CONTAINER_PATH}/${TAG}:${PETSC_DIR}"
-
-    ###    c.) Fix NCI's broken python installation - <Firedrake specific>
-    module load patchelf
-    for py in "python${PY_VERSION}" python3 python; do
-        patchelf --force-rpath --set-rpath "${APP_IN_CONTAINER_PATH}/${TAG}/venv/lib" "venv/bin/${py}"
-    done
-    module unload patchelf
-
-    ###    d.) Link in entire OpenMPI build - <Firedrake specific>
-    rm venv/bin/mpi{exec,cc,cxx,f90}
-    module load "${OMPI_MODULE}"
-    for i in $(find "${OPENMPI_BASE}/" ! -type d); do
-        f="${i//$OPENMPI_BASE\//}"
-        mkdir -p "venv/${f%/*}"
-        ln -sf ${i} "venv/${f}"
-    done
-    rm -rf venv/lib/{GNU,nvidia} venv/include/{GNU,nvidia}
-    mv venv/lib/Intel/* venv/lib
-    mv venv/include/Intel/* venv/include
-    rmdir venv/{lib,include}/Intel
+    if [[ $( type -t __firedrake_post_build_in_container_hook ) == function ]]; then
+        __firedrake_post_build_in_container_hook
+    fi
 
 }
 
@@ -149,7 +138,7 @@ if [[ -L "${APP_IN_CONTAINER_PATH}/${TAG}" ]]; then
 fi
 
 ### 7.) Extract source & dependent squashfs into overlay
-prep_overlay "${APPS_PREFIX}/petsc${APP_BUILD_TAG}/petsc-${PETSC_TAG}.sqsh" "${SQUASHFS_PATH}/petsc${APP_BUILD_TAG}-${PETSC_TAG}" "${OVERLAY_EXTERNAL_PATH%/*}/petsc${APP_BUILD_TAG}/${PETSC_TAG}"
+copy_squash_to_overlay "${APPS_PREFIX}/petsc${APP_BUILD_TAG}/petsc-${PETSC_TAG}.sqsh" "${SQUASHFS_PATH}/petsc${APP_BUILD_TAG}-${PETSC_DIR_SUFFIX}" "${OVERLAY_EXTERNAL_PATH%/*}/petsc${APP_BUILD_TAG}/${PETSC_DIR_SUFFIX}"
 
 mkdir -p "${OVERLAY_EXTERNAL_PATH}/${TAG}"
 mv "${APP_NAME}" "${OVERLAY_EXTERNAL_PATH}/${TAG}"
@@ -161,47 +150,42 @@ for bind_dir in "${bind_dirs[@]}"; do
 done
 ### Remove trailing comma
 bind_str="${bind_str::-1}"
+export BIND_STR="${bind_str}"
 
-module load singularity
-singularity -s exec --bind "${bind_str},${OVERLAY_BASE}:/g" "${BUILD_CONTAINER_PATH}/base.sif" "${this_script}" --inner
+### Derive first directory of absolute path outside of the contaner
+tmp="${APP_IN_CONTAINER_PATH:1}"
+first_dir="/${tmp%%/*}"
+
+module load "${SINGULARITY_MODULE}"
+
+if [[ $( type -t __firedrake_pre_container_launch_hook ) == function ]]; then
+    __firedrake_pre_container_launch_hook
+fi
+
+singularity -s exec --bind "${BIND_STR},${OVERLAY_BASE}:${first_dir}" "${BUILD_CONTAINER_PATH}/base.sif" "${this_script}" --inner
 
 ### 9.) Create squashfs
 mkdir -p "${SQUASHFS_PATH}"
 mv "${OVERLAY_EXTERNAL_PATH}/${TAG}" "${SQUASHFS_PATH}/${SQUASHFS_APP_DIR}"
 
-wget https://dl.rockylinux.org/pub/rocky/8/AppStream/x86_64/os/Packages/m/mesa-dri-drivers-23.1.4-3.el8_10.x86_64.rpm
-rpm2cpio mesa-dri-drivers-23.1.4-3.el8_10.x86_64.rpm | cpio -idmV
-mv usr/lib64/dri "${SQUASHFS_PATH}/${SQUASHFS_APP_DIR}"
-
-wget https://dl.rockylinux.org/pub/rocky/8/AppStream/x86_64/os/Packages/x/xorg-x11-server-Xvfb-1.20.11-24.el8_10.x86_64.rpm
-rpm2cpio xorg-x11-server-Xvfb-1.20.11-24.el8_10.x86_64.rpm | cpio -idmV
-mv usr/bin/Xvfb "${SQUASHFS_PATH}/${SQUASHFS_APP_DIR}/venv/bin"
+if [[ $( type -t __firedrake_extra_squashfs_contents ) == function ]]; then
+    __firedrake_extra_squashfs_contents
+fi
 
 mksquashfs squashfs-root "${APP_NAME}.sqsh" -no-fragments -no-duplicates -no-sparse -no-exports -no-recovery -noI -noD -noF -noX -processors 8
 
 ### 10.) Create symlinks & modules
 mkdir -p "${APP_IN_CONTAINER_PATH}"
-ln -s "/opt/${SQUASHFS_APP_DIR}" "${APP_IN_CONTAINER_PATH}/${TAG}"
+ln -sf "/opt/${SQUASHFS_APP_DIR}" "${APP_IN_CONTAINER_PATH}/${TAG}"
 
 cp "${APP_NAME}.sqsh" "${APP_IN_CONTAINER_PATH}/${APP_NAME}-${TAG}.sqsh"
 
-mkdir -p "${MODULE_FILE%/*}"
-copy_and_replace "${here}/../module/${APP_NAME}-base" "${MODULE_FILE}" APP_IN_CONTAINER_PATH COMPILER_MODULE TAG PETSC_MODULE
-copy_and_replace "${here}/../module/version-base" "${MODULE_FILE%/*}/.version" TAG
-cp "${here}/../module/${APP_NAME}-common" "${MODULE_FILE%/*}"
-
-if [[ ! -e "${MODULE_FILE%/*}/.modulerc" ]]; then
-    echo '#%Module1.0' >"${MODULE_FILE%/*}/.modulerc"
-    echo '' >>"${MODULE_FILE%/*}/.modulerc"
-fi
-echo module-version "${APP_NAME}${APP_BUILD_TAG}/${TAG}" "${GIT_COMMIT}" >>"${MODULE_FILE%/*}/.modulerc"
-for tag in "${REPO_TAGS[@]}"; do
-    echo module-version "${APP_NAME}${APP_BUILD_TAG}/${TAG}" "${tag}" >>"${MODULE_FILE%/*}/.modulerc"
-done
+make_modulefiles
 
 mkdir -p "${APP_IN_CONTAINER_PATH}-scripts/${TAG}/overrides"
-cp "${here}"/launcher{,_conf}.sh "${APP_IN_CONTAINER_PATH}-scripts/${TAG}"
-cp "${here}"/overrides/* "${APP_IN_CONTAINER_PATH}-scripts/${TAG}/overrides"
+cp "${here}/launcher.sh" "${APP_IN_CONTAINER_PATH}-scripts/${TAG}"
+cp "${here}/${FD_SYSTEM}/launcher_conf.sh" "${APP_IN_CONTAINER_PATH}-scripts/${TAG}"
+cp "${here}"/overrides/* "${APP_IN_CONTAINER_PATH}-scripts/${TAG}/overrides/"
 for i in "${SQUASHFS_PATH}/${SQUASHFS_APP_DIR}"/venv/bin/*; do
     ln -s launcher.sh "${APP_IN_CONTAINER_PATH}-scripts/${TAG}/${i##*/}"
 done
@@ -210,4 +194,4 @@ done
 fix_apps_perms "${MODULE_FILE%/*}" "${APP_IN_CONTAINER_PATH}" "${APP_IN_CONTAINER_PATH}"-scripts
 
 ### 12.) Anything else?
-singularity -s exec --bind "${bind_str}" --overlay="${APP_IN_CONTAINER_PATH}/${APP_NAME}-${TAG}.sqsh" "${BUILD_CONTAINER_PATH}/base.sif" "${this_script}" --inner2
+singularity -s exec --bind "${BIND_STR},${first_dir}" --overlay="${APP_IN_CONTAINER_PATH}/${APP_NAME}-${TAG}.sqsh" "${BUILD_CONTAINER_PATH}/base.sif" "${this_script}" --inner2

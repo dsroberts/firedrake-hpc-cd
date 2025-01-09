@@ -77,7 +77,7 @@ done
 $debug "PROG_ARGS =" "${PROG_ARGS[@]}"
 
 if ! [[ "${SINGULARITY_BINARY_PATH}" ]]; then
-    module load singularity
+    module load "${SINGULARITY_MODULE}"
     export SINGULARITY_BINARY_PATH=$( type -p singularity )
 fi
 
@@ -110,7 +110,7 @@ fi
 
 $debug "CONTAINER_OVERLAY_PATH after override check = " ${CONTAINER_OVERLAY_PATH}
 
-if ! [[ -x "${SINGULARITY_BINARY_PATH}" ]]; then
+if [[ -d /.singularity.d ]]; then
     ### Short circuit detection
     ### In some cases (e.g. mpi processes launched from orterun), launcher will be invoked from
     ### within the container. The tell-tale sign for this is if /opt/singularity is missing.
@@ -136,12 +136,11 @@ if [[ -e "${wrapper_bin}"/overrides/"${cmd_to_run[0]##*/}".config.sh ]]; then
     . "${wrapper_bin}"/overrides/"${cmd_to_run[0]##*/}".config.sh
 fi
 
-export SINGULARITYENV_LD_LIBRARY_PATH=$LD_LIBRARY_PATH
+export SINGULARITYENV_LD_LIBRARY_PATH=$SINGULARITYENV_LD_LIBRARY_PATH:$LD_LIBRARY_PATH
 declare -a singularity_default_path=( '/usr/local/sbin' '/usr/local/bin' '/usr/sbin' '/usr/bin' '/sbin' '/bin' )
 
 while IFS= read -r -d: i; do
     in_array "${singularity_default_path[@]}" "${i}" && continue
-    [[ "${i}" == "/opt/singularity/bin" ]] && continue
     [[ "${i}" == "${wrapper_bin}" ]] && continue
     SINGULARITYENV_PREPEND_PATH="${SINGULARITYENV_PREPEND_PATH}:${i}"
 done<<<"${PATH%:}:"

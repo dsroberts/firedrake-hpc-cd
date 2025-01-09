@@ -1,0 +1,33 @@
+Bootstrap: scratch
+
+%setup
+        mkdir -p ${SINGULARITY_ROOTFS}/opt/admin-pe
+        mkdir -p ${SINGULARITY_ROOTFS}/opt/AMD
+        mkdir -p ${SINGULARITY_ROOTFS}/opt/amdgpu
+        mkdir -p ${SINGULARITY_ROOTFS}/opt/cray
+        mkdir -p ${SINGULARITY_ROOTFS}/opt/modulefiles
+        mkdir -p ${SINGULARITY_ROOTFS}/opt/pawsey
+
+        ### Mount points for various bits of the image
+        mkdir -p ${SINGULARITY_ROOTFS}/bin
+        mkdir -p ${SINGULARITY_ROOTFS}/boot
+        mkdir -p ${SINGULARITY_ROOTFS}/etc
+        mkdir -p ${SINGULARITY_ROOTFS}/lib
+        mkdir -p ${SINGULARITY_ROOTFS}/lib64
+        mkdir -p ${SINGULARITY_ROOTFS}/local
+        mkdir -p ${SINGULARITY_ROOTFS}/pe
+        mkdir -p ${SINGULARITY_ROOTFS}/ram
+        mkdir -p ${SINGULARITY_ROOTFS}/run
+        mkdir -p ${SINGULARITY_ROOTFS}/scratch
+        mkdir -p ${SINGULARITY_ROOTFS}/software
+        mkdir -p ${SINGULARITY_ROOTFS}/usr
+        mkdir -p ${SINGULARITY_ROOTFS}/sys/fs/cgroup
+
+        ### Mount points for service sockets
+        mkdir -p ${SINGULARITY_ROOTFS}/var/lib/sss
+        mkdir -p ${SINGULARITY_ROOTFS}/var/run/munge
+        mkdir -p ${SINGULARITY_ROOTFS}/var/lib/ca-certificates
+        mkdir -p ${SINGULARITY_ROOTFS}/var/spool/slurmd
+
+%runscript
+        /usr/bin/bash -l

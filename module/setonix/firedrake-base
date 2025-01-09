@@ -1,0 +1,34 @@
+local prefix = "__APP_IN_CONTAINER_PATH__"
+local tag = "__TAG__"
+
+load("__SINGULARITY_MODULE__")
+if ( not isloaded("petsc") ) then
+    load("__PETSC_MODULE__")
+end
+
+prepend_path("CONTAINER_OVERLAY_PATH", pathJoin(prefix,"firedrake-" .. tag .. ".sqsh"))
+prepend_path("SINGULARITYENV_PREPEND_PATH", pathJoin(prefix,tag,"venv/bin"))
+-- prepend_path("PATH",pathJoin(prefix .. "-scripts",tag))
+
+setenv("FIREDRAKE_BASE", prefix)
+setenv("FIREDRAKE_TAG", tag)
+setenv("VIRTUAL_ENV", pathJoin(prefix,tag,"venv"))
+setenv("OMP_NUM_THREADS","1")
+
+local tmpdir_base = "/tmp"
+
+setenv("PYOP2_CACHE_DIR", pathJoin(tmpdir_base,"pyop2"))
+setenv("FIREDRAKE_TSFC_KERNEL_CACHE_DIR", pathJoin(tmpdir_base,"tsfc"))
+setenv("XDG_CACHE_HOME", pathJoin(tmpdir_base,"xdg"))
+
+local mygadopt = os.getenv("MY_GADOPT") or ""
+if ( mygadopt ~= "" ) then
+    if ( isFile(pathJoin(mygadopt,"gadopt/__init__.py") )) then
+        prepend_path("PYTHONPATH",mygadopt)
+    else
+        LmodWarning("ERROR! gadopt/__init__.py not found at " ..  os.getenv("MY_GADOPT") .. ": using default G-ADOPT installation")
+        prepend_path("PYTHONPATH",pathJoin(prefix,"gadopt"))
+    end
+else
+    prepend_path("PYTHONPATH",pathJoin(prefix,"gadopt"))
+end

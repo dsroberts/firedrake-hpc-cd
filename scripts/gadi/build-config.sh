@@ -1,7 +1,20 @@
+### All settings used by build scripts
+###
+### -- Compilers        |   -- Source/destination paths   |   -- Optional settings
+###=====================|=================================|=======================================
+### MPI_MODULE          |   APPS_PREFIX                   |   MODULE_SUFFIX
+### PY_MODULE           |   MODULE_PREFIX                 |   MODULE_USE_PATHS
+### COMPILER_MODULE     |   SQUASHFS_PATH                 |   EXTRA_MODULES
+### SINGULARITY_MODULE  |   OVERLAY_BASE                  |   get_system_specific_petsc_flags()
+### PY_VERSION          |   BUILD_CONTAINER_PATH          |
+### BUILD_NCPUS         |   BUILD_STAGE_DIR               |
+###                     |   EXTRACT_DIR                   |
+###                     |   bind_dirs                     |
+
 export MPI_MODULE=openmpi/4.0.7
 ### Must have numpy - no reason not to use NCI-provided modules
 export PY_MODULE=python3/3.11.7
-export SINGULARITY_MODULE=""
+export SINGULARITY_MODULE=singularity
 
 compiler_type=gcc
 compiler_version=14.2.0
@@ -13,8 +26,8 @@ if [[ $compiler_type == "intel-compiler" ]]; then
     export VERSION_TAG="-intelclassic"
     export PYOP2_COMPILER_OPT_FLAGS='"-O3 -fPIC -xHost -fp-model=fast"'
 
-    function get_scalapack_flags() {
-        export SCALAPACK_FLAGS='--with-scalapack-include='${MKLROOT}'/include --with-scalapack-lib="-lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_openmpi_lp64 -lpthread -lm -ldl"'
+    function get_system_specific_petsc_flags() {
+        export SYSTEM_SPECIFIC_FLAGS='--with-scalapack-include='${MKLROOT}'/include --with-scalapack-lib="-lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_openmpi_lp64 -lpthread -lm -ldl"'
     }
 
 elif [[ $compiler_type == "intel-compiler-llvm" ]]; then
@@ -23,8 +36,8 @@ elif [[ $compiler_type == "intel-compiler-llvm" ]]; then
     export VERSION_TAG=""
     export PYOP2_COMPILER_OPT_FLAGS='"-O3 -fPIC -xHost -fp-model=fast"'
 
-    function get_scalapack_flags() {
-        export SCALAPACK_FLAGS='--with-scalapack-include='${MKLROOT}'/include --with-scalapack-lib="-lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_openmpi_lp64 -lpthread -lm -ldl"'
+    function get_system_specific_petsc_flags() {
+        export SYSTEM_SPECIFIC_FLAGS='--with-scalapack-include='${MKLROOT}'/include --with-scalapack-lib="-lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_openmpi_lp64 -lpthread -lm -ldl"'
     }
 
 elif [[ $compiler_type == "gcc" ]]; then
@@ -33,8 +46,8 @@ elif [[ $compiler_type == "gcc" ]]; then
     export VERSION_TAG="-${compiler_type}${compiler_version%%\.*}"
     export PYOP2_COMPILER_OPT_FLAGS='"-fPIC -O3 -march=native -mtune=native -ffast-math"'
 
-    function get_scalapack_flags() {
-        export SCALAPACK_FLAGS="--download-scalapack"
+    function get_system_specific_petsc_flags() {
+        export SYSTEM_SPECIFIC_FLAGS="--download-scalapack"
     }
 fi
 
@@ -43,17 +56,19 @@ export MKL_MODULE=intel-mkl/"${mkl_version}"
 py_ver="${PY_MODULE##*/}"
 export PY_VERSION="${py_ver%.*}"
 
+export EXTRACT_DIR="${PBS_JOBFS}"
+export BUILD_NCPUS="${PBS_NCPUS}"
 export APPS_PREFIX=/g/data/fp50/apps
 export MODULE_PREFIX=/g/data/fp50/modules
-export SQUASHFS_PATH="${PBS_JOBFS}/squashfs-root/opt"
-export OVERLAY_BASE="${PBS_JOBFS}/overlay"
+export SQUASHFS_PATH="${EXTRACT_JOBFS}/squashfs-root/opt"
+export OVERLAY_BASE="${EXTRACT_JOBFS}/overlay"
 ### N.B. CONTAINER_PATH is set by petsc module, so we need a different
 ### variable inside the build scripts as some of them load & unload
 ### a petsc module.
 export BUILD_CONTAINER_PATH="${APPS_PREFIX}/petsc/etc"
 export BUILD_STAGE_DIR=/home/563/dr4292
 export WRITERS_GROUP=xd2
-export EXTRACT_DIR="${PBS_JOBFS}"
+
 
 ### pnetcdf will not compile against oneAPI fortran compiler
     ### with system autoconf - see https://community.intel.com/t5/Intel-Fortran-Compiler/ifx-2021-1-beta04-HPC-Toolkit-build-error-with-loopopt/td-p/1184181

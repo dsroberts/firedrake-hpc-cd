@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
-set -eu
+set -e
 ### Recommended PBS job
 ### qsub -I -lncpus=12,mem=48GB,walltime=2:00:00,jobfs=100GB,storage=gdata/xd2+scratch/xd2+gdata/fp50...
+### Recommended SLURM job
+### salloc -p work -n 12 -N 1 -c 1 -t 2:00:00 --mem 48G
 ###
 ### Use github action to checkout out petsc repo, tar it up and
-### copy to gadi
+### copy to HPC system
 ###
 ### ==== SECTIONS =====
 ###
 ### 1.) Intialisation
+module purge
+
 this_script=$(realpath $0)
 here="${this_script%/*}"
 export APP_NAME="petsc"
@@ -19,7 +23,7 @@ source "${here}/functions.sh"
 
 ### Load machine-specific definitions
 [[ -e "${here}/${FD_SYSTEM}/build-config.sh" ]] && source "${here}/${FD_SYSTEM}/build-config.sh"
-[[ -e "${here}/${FD_SYSTEM}/functions.sh" ]]    && source "${here}/${FD_SYSTEM}/functions.sh"
+[[ -e "${here}/${FD_SYSTEM}/functions.sh" ]] && source "${here}/${FD_SYSTEM}/functions.sh"
 
 ### 2.) Extract repo and gather commit/tag data
 cd "${EXTRACT_DIR}"
@@ -42,26 +46,28 @@ if [[ "${DO_64BIT}" ]]; then
 fi
 
 export APP_IN_CONTAINER_PATH="${APPS_PREFIX}/${APP_NAME}${APP_BUILD_TAG}"
-export OVERLAY_EXTERNAL_PATH="${APP_IN_CONTAINER_PATH//\/g/"${OVERLAY_BASE}"}"
-export MODULE_FILE="${MODULE_PREFIX}/${APP_NAME}${APP_BUILD_TAG}/${TAG}${VERSION_TAG}"
+export OVERLAY_EXTERNAL_PATH="${OVERLAY_BASE}/${APP_IN_CONTAINER_PATH#/*/}"
+export MODULE_FILE="${MODULE_PREFIX}/${APP_NAME}${APP_BUILD_TAG}/${TAG}${VERSION_TAG}${MODULE_SUFFIX}"
 export SQUASHFS_APP_DIR="${APP_NAME}${APP_BUILD_TAG}-${TAG}"
+
+### Some modules may be needed outside of the container
+for p in "${MODULE_USE_PATHS[@]}"; do
+    module use ${p}
+done
 
 ### 3.) Load dependent modules
 ### 4.) Define 'inner' function(s)
 function inner() {
 
     ### i1.) Load modules & set environment
-    for p in "${MODULE_USE_PATHS[@]}"; do
-        module use ${p}
-    done
-
     for m in "${EXTRA_MODULES[@]}"; do
         module load ${m}
     done
 
-    module load "${COMPILER_MODULE}"
-    module load "${MPI_MODULE}"
-    module load "${PY_MODULE}"
+    ### No quotes - some of these may need multiple modules to work
+    module load ${COMPILER_MODULE}
+    module load ${MPI_MODULE}
+    module load ${PY_MODULE}
 
     ### i2.) Install
     if [[ "${DO_64BIT}" ]]; then
@@ -72,14 +78,17 @@ function inner() {
 
     cd "${APP_IN_CONTAINER_PATH}/${TAG}"
 
-    get_scalapack_flags
+    export MPIRUN="${MPIRUN:-mpirun}"
+    if [[ $(type -t get_system_specific_petsc_flags) == function ]]; then
+        get_system_specific_petsc_flags
+    fi
 
-    python${PY_VERSION} ./configure PETSC_DIR="${APP_IN_CONTAINER_PATH}/${TAG}" PETSC_ARCH=default --with-fc=mpif90 COPTFLAGS="${COMPILER_OPT_FLAGS}" CXXOPTFLAGS="${COMPILER_OPT_FLAGS}" FOPTFLAGS="${COMPILER_OPT_FLAGS}" ${OPTS_64BIT} --download-suitesparse --with-cxx=mpicxx --with-hwloc-dir=/usr --with-zlib --download-pastix --with-cc=mpicc --download-mumps --download-hdf5 --with-mpiexec=mpirun --download-hypre --download-netcdf --download-pnetcdf --download-superlu_dist --with-shared-libraries=1 --with-c2html=0 --with-fortran-bindings=0 --download-metis --download-ptscotch --with-debugging=0 --download-bison ${SCALAPACK_FLAGS} --with-make-np="${PBS_NCPUS}"
+    python${PY_VERSION} ./configure PETSC_DIR="${APP_IN_CONTAINER_PATH}/${TAG}" PETSC_ARCH=default --with-mpiexec=${MPIRUN} --with-fc=mpif90 COPTFLAGS="${COMPILER_OPT_FLAGS}" CXXOPTFLAGS="${COMPILER_OPT_FLAGS}" FOPTFLAGS="${COMPILER_OPT_FLAGS}" ${OPTS_64BIT} --download-suitesparse --with-cxx=mpicxx --with-hwloc-dir=/usr --with-zlib --download-pastix --with-cc=mpicc --download-mumps --download-hdf5 --with-mpiexec=mpirun --download-hypre --download-netcdf --download-pnetcdf --download-superlu_dist --with-shared-libraries=1 --with-c2html=0 --with-fortran-bindings=0 --download-metis --download-ptscotch --with-debugging=0 --download-bison ${SYSTEM_SPECIFIC_FLAGS} --with-make-np="${BUILD_NCPUS}"
     make PETSC_DIR="${APP_IN_CONTAINER_PATH}/${TAG}" PETSC_ARCH=default all
 
     ### i3.) Installation repair
     ###    a.) Resolve all shared object links
-    if [[ $( type -t __petsc_post_build_in_container_hook ) == function ]]; then
+    if [[ $(type -t __petsc_post_build_in_container_hook) == function ]]; then
         __petsc_post_build_in_container_hook
     fi
 
@@ -110,9 +119,19 @@ for bind_dir in "${bind_dirs[@]}"; do
 done
 ### Remove trailing comma
 bind_str="${bind_str::-1}"
+export BIND_STR="${bind_str}"
 
-module load singularity/"${SINGULARITY_MODULE}"
-singularity -s exec --bind "${bind_str},${OVERLAY_BASE}:/g" "${BUILD_CONTAINER_PATH}/base.sif" "${this_script}" --inner
+### Derive first directory of absolute path outside of the contaner
+tmp="${APP_IN_CONTAINER_PATH:1}"
+first_dir="/${tmp%%/*}"
+
+module load "${SINGULARITY_MODULE}"
+
+if [[ $(type -t __petsc_pre_container_launch_hook) == function ]]; then
+    __petsc_pre_container_launch_hook
+fi
+
+singularity -s exec --bind "${BIND_STR},${OVERLAY_BASE}:${first_dir}" "${BUILD_CONTAINER_PATH}/base.sif" "${this_script}" --inner
 
 ### 9.) Create squashfs
 mkdir -p "${SQUASHFS_PATH}"
@@ -126,25 +145,7 @@ ln -sf "/opt/${SQUASHFS_APP_DIR}" "${APP_IN_CONTAINER_PATH}/${TAG}"
 
 cp "${APP_NAME}.sqsh" "${APP_IN_CONTAINER_PATH}/${APP_NAME}-${TAG}${VERSION_TAG}.sqsh"
 
-mkdir -p "${MODULE_FILE%/*}"
-copy_and_replace "${here}/../module/${FD_SYSTEM}/${APP_NAME}-base" "${MODULE_FILE}" APP_IN_CONTAINER_PATH COMPILER_MODULE TAG VERSION_TAG PYOP2_COMPILER_OPT_FLAGS
-if [[ -z "${VERSION_TAG}" ]]; then
-    copy_and_replace "${here}/../module/${FD_SYSTEM}/version-base" "${MODULE_FILE%/*}/.version" TAG
-fi
-cp "${here}/../module/${FD_SYSTEM}/${APP_NAME}-common" "${MODULE_FILE%/*}"
-
-if [[ ! -e "${MODULE_FILE%/*}"/.modulerc ]]; then
-    echo '#%Module1.0' >"${MODULE_FILE%/*}/.modulerc"
-    echo '' >>"${MODULE_FILE%/*}/.modulerc"
-fi
-
-echo module-version "${APP_NAME}${APP_BUILD_TAG}/${TAG}${VERSION_TAG}" "${GIT_COMMIT}${VERSION_TAG}" >>"${MODULE_FILE%/*}/.modulerc"
-for tag in "${REPO_TAGS[@]}"; do
-    echo module-version "${APP_NAME}${APP_BUILD_TAG}/${TAG}${VERSION_TAG}" "${tag}${VERSION_TAG}" >>"${MODULE_FILE%/*}/.modulerc"
-done
-if [[ "${VERSION_TAG}" ]]; then
-    echo module-version "${APP_NAME}${APP_BUILD_TAG}/${TAG}${VERSION_TAG}" "${VERSION_TAG:1}" >>"${MODULE_FILE%/*}/.modulerc"
-fi
+make_modulefiles
 
 ### 11.) Permissions
 fix_apps_perms "${MODULE_FILE%/*}" "${APP_IN_CONTAINER_PATH}"

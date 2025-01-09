@@ -8,6 +8,6 @@ set version_tag "__VERSION_TAG__"
 
 set pyop2_compiler_opt_flags __PYOP2_COMPILER_OPT_FLAGS__
 
-module load singularity __COMPILER_MODULE__
+module load __SINGULARITY_MODULE__ __COMPILER_MODULE__
 
 source $mydir/petsc-common
