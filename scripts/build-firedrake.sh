@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-set -eu
+set -e
 ### Recommended PBS job
-### qsub -I -lncpus=1,mem=16GB,walltime=1:00:00,jobfs=100GB,storage=gdata/xd2+scratch/xd2+gdata/fp50 -q copyq
+### qsub -I -lncpus=1,mem=16GB,walltime=1:00:00,jobfs=100GB,storage=gdata/xd2+scratch/xd2+gdata/fp50+scratch/fp50 -q copyq
 ### Recommended SLURM job
 ### salloc -p work -n 1 -N 1 -c 1 -t 1:00:00 --mem 16G
 ###
@@ -132,9 +132,11 @@ if [[ "$#" -ge 1 ]]; then
 fi
 
 ### 6.) Pre-existing build check
-if [[ -L "${APP_IN_CONTAINER_PATH}/${TAG}" ]]; then
-    echo "This version of ${APP_NAME} is already installed - doing nothing"
-    exit 0
+if ! [[ "${FD_INSTALL_DRY_RUN}" ]]; then
+    if [[ -L "${APP_IN_CONTAINER_PATH}/${TAG}" ]]; then
+        echo "This version of ${APP_NAME} is already installed - doing nothing"
+        exit 0
+    fi
 fi
 
 ### 7.) Extract source & dependent squashfs into overlay
@@ -149,8 +151,7 @@ for bind_dir in "${bind_dirs[@]}"; do
     [[ -d "${bind_dir}" ]] && bind_str="${bind_str}${bind_dir},"
 done
 ### Remove trailing comma
-bind_str="${bind_str::-1}"
-export BIND_STR="${bind_str}"
+export BIND_STR="${bind_str::-1}"
 
 ### Derive first directory of absolute path outside of the contaner
 tmp="${APP_IN_CONTAINER_PATH:1}"
@@ -174,6 +175,10 @@ fi
 
 mksquashfs squashfs-root "${APP_NAME}.sqsh" -no-fragments -no-duplicates -no-sparse -no-exports -no-recovery -noI -noD -noF -noX -processors 8
 
+if [[ "${FD_INSTALL_DRY_RUN}" ]]; then
+    cp "${APP_NAME}.sqsh" "${BUILD_STAGE_DIR}/${APP_NAME}-${TAG}${VERSION_TAG}.sqsh"
+    exit
+fi
 ### 10.) Create symlinks & modules
 mkdir -p "${APP_IN_CONTAINER_PATH}"
 ln -sf "/opt/${SQUASHFS_APP_DIR}" "${APP_IN_CONTAINER_PATH}/${TAG}"

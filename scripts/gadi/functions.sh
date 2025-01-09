@@ -23,7 +23,7 @@ function __firedrake_post_build_in_container_hook() {
 
     ###    d.) Link in entire OpenMPI build - <Firedrake specific>
     rm venv/bin/mpi{exec,cc,cxx,f90}
-    module load "${OMPI_MODULE}"
+    module load "${MPI_MODULE}"
     for i in $(find "${OPENMPI_BASE}/" ! -type d); do
         f="${i//$OPENMPI_BASE\//}"
         mkdir -p "venv/${f%/*}"

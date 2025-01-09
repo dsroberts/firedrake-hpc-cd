@@ -16,8 +16,8 @@ export MPI_MODULE=openmpi/4.0.7
 export PY_MODULE=python3/3.11.7
 export SINGULARITY_MODULE=singularity
 
-compiler_type=gcc
-compiler_version=14.2.0
+compiler_type=intel-compiler-llvm
+compiler_version=2024.2.0
 mkl_version=2024.2.0
 
 ### Define any compiler-specific things here
@@ -60,18 +60,18 @@ export EXTRACT_DIR="${PBS_JOBFS}"
 export BUILD_NCPUS="${PBS_NCPUS}"
 export APPS_PREFIX=/g/data/fp50/apps
 export MODULE_PREFIX=/g/data/fp50/modules
-export SQUASHFS_PATH="${EXTRACT_JOBFS}/squashfs-root/opt"
-export OVERLAY_BASE="${EXTRACT_JOBFS}/overlay"
+export SQUASHFS_PATH="${EXTRACT_DIR}/squashfs-root/opt"
+export OVERLAY_BASE="${EXTRACT_DIR}/overlay"
 ### N.B. CONTAINER_PATH is set by petsc module, so we need a different
 ### variable inside the build scripts as some of them load & unload
 ### a petsc module.
 export BUILD_CONTAINER_PATH="${APPS_PREFIX}/petsc/etc"
-export BUILD_STAGE_DIR=/home/563/dr4292
+export BUILD_STAGE_DIR=/scratch/fp50/dr4292/staging
 export WRITERS_GROUP=xd2
 
 
 ### pnetcdf will not compile against oneAPI fortran compiler
-    ### with system autoconf - see https://community.intel.com/t5/Intel-Fortran-Compiler/ifx-2021-1-beta04-HPC-Toolkit-build-error-with-loopopt/td-p/1184181
+### with system autoconf - see https://community.intel.com/t5/Intel-Fortran-Compiler/ifx-2021-1-beta04-HPC-Toolkit-build-error-with-loopopt/td-p/1184181
 declare -a EXTRA_MODULES=( cmake/3.24.2 autoconf/2.72 "${MKL_MODULE}" )
 export EXTRA_MODULES
 

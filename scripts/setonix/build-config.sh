@@ -45,7 +45,7 @@ export MODULE_SUFFIX=".lua"
 ### variable inside the build scripts as some of them load & unload
 ### a petsc module.
 export BUILD_CONTAINER_PATH="${APPS_PREFIX}/petsc/etc"
-export BUILD_STAGE_DIR="/home/droberts"
+export BUILD_STAGE_DIR="/scratch/pawsey0821/droberts/staging"
 export EXTRACT_DIR="/tmp"
 
 export MPICH_CC="gcc"
