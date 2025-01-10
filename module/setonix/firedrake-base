@@ -8,7 +8,7 @@ end
 
 prepend_path("CONTAINER_OVERLAY_PATH", pathJoin(prefix,"firedrake-" .. tag .. ".sqsh"))
 prepend_path("SINGULARITYENV_PREPEND_PATH", pathJoin(prefix,tag,"venv/bin"))
--- prepend_path("PATH",pathJoin(prefix .. "-scripts",tag))
+prepend_path("PATH",pathJoin(prefix .. "-scripts",tag))
 
 setenv("FIREDRAKE_BASE", prefix)
 setenv("FIREDRAKE_TAG", tag)

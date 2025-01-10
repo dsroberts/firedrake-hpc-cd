@@ -3,7 +3,7 @@ set -e
 ### Recommended PBS job
 ### qsub -I -lncpus=1,mem=16GB,walltime=1:00:00,jobfs=100GB,storage=gdata/xd2+scratch/xd2+gdata/fp50+scratch/fp50 -q copyq
 ### Recommended SLURM job
-### salloc -p work -n 1 -N 1 -c 1 -t 1:00:00 --mem 16G
+### salloc -p copy -n 1 -N 1 -c 1 -t 1:00:00 --mem 16G
 ###
 ### Use github action to checkout out firedrake repo, tar it up and
 ### copy to HPC system
@@ -176,7 +176,10 @@ fi
 mksquashfs squashfs-root "${APP_NAME}.sqsh" -no-fragments -no-duplicates -no-sparse -no-exports -no-recovery -noI -noD -noF -noX -processors 8
 
 if [[ "${FD_INSTALL_DRY_RUN}" ]]; then
+    mkdir -p "${BUILD_STAGE_DIR}/${APP_NAME}${APP_BUILD_TAG}"
     cp "${APP_NAME}.sqsh" "${BUILD_STAGE_DIR}/${APP_NAME}-${TAG}${VERSION_TAG}.sqsh"
+    ### Save modules to a dummy location
+    export MODULE_FILE="${BUILD_STAGE_DIR}/${APP_NAME}${APP_BUILD_TAG}/${TAG}${MODULE_SUFFIX}"
     exit
 fi
 ### 10.) Create symlinks & modules
