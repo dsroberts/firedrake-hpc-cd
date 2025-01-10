@@ -60,11 +60,11 @@ export BUILD_NCPUS="${SLURM_NPROCS}"
 export LMOD_PACKAGE_PATH="/software/setonix/lmod-extras"
 export LMOD_CUSTOM_COMPILER_GNU_8_0_PREFIX="/software/setonix/2024.05/modules/zen3/${COMPILER_MODULE}/utilities"
 export MYSOFTWARE="/software/projects/${PAWSEY_PROJECT}/${USER}"
-declare -a MODULE_USE_PATHS=( "/software/setonix/2024.05/pawsey/modules" )
+declare -a MODULE_USE_PATHS=( "/software/projects/pawsey0821/modules" "/software/setonix/2024.05/pawsey/modules" )
 export MODULE_USE_PATHS
 
 ### Need compiler module loaded ahead of time to resolve cmake and autoconf
 declare -a EXTRA_MODULES=( "${PRGENV_MODULE}" "${COMPILER_MODULE}" "cmake/3.27.7" "autoconf/2.69" "libfabric/1.15.2.0" )
 export EXTRA_MODULES
 
-declare -a bind_dirs=("/opt/admin-pe" "/opt/AMD" "/opt/amdgpu" "/opt/cray" "/opt/modulefiles" "/opt/pawsey" "/bin" "/boot" "/etc" "/lib" "/lib64" "/local" "/pe" "/ram" "rootfs.rw" "root_ro" "/run" "/usr" "/sys/fs/cgroup" "/var/lib/sss" "/var/run/munge" "/var/lib/ca-certificates" )
+declare -a bind_dirs=("/opt/admin-pe" "/opt/AMD" "/opt/amdgpu" "/opt/cray" "/opt/modulefiles" "/opt/pawsey" "/bin" "/boot" "/etc" "/lib" "/lib64" "/local" "/pe" "/ram" "/rootfs.rw" "/root_ro" "/run" "/scratch" "/usr" "/sys/fs/cgroup" "/var/lib/sss" "/var/run/munge" "/var/lib/ca-certificates" )

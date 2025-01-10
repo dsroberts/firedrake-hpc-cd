@@ -27,7 +27,7 @@ if [[ $compiler_type == "intel-compiler" ]]; then
     export PYOP2_COMPILER_OPT_FLAGS='"-O3 -fPIC -xHost -fp-model=fast"'
 
     function get_system_specific_petsc_flags() {
-        export SYSTEM_SPECIFIC_FLAGS='--with-scalapack-include='${MKLROOT}'/include --with-scalapack-lib="-lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_openmpi_lp64 -lpthread -lm -ldl"'
+        export SYSTEM_SPECIFIC_FLAGS='--with-scalapack-include='${MKLROOT}'/include --with-scalapack-lib=\"-lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_openmpi_lp64 -lpthread -lm -ldl\"'
     }
 
 elif [[ $compiler_type == "intel-compiler-llvm" ]]; then
@@ -37,7 +37,7 @@ elif [[ $compiler_type == "intel-compiler-llvm" ]]; then
     export PYOP2_COMPILER_OPT_FLAGS='"-O3 -fPIC -xHost -fp-model=fast"'
 
     function get_system_specific_petsc_flags() {
-        export SYSTEM_SPECIFIC_FLAGS='--with-scalapack-include='${MKLROOT}'/include --with-scalapack-lib="-lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_openmpi_lp64 -lpthread -lm -ldl"'
+        export SYSTEM_SPECIFIC_FLAGS='--with-scalapack-include='${MKLROOT}'/include --with-scalapack-lib=\"-lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_openmpi_lp64 -lpthread -lm -ldl\"'
     }
 
 elif [[ $compiler_type == "gcc" ]]; then
