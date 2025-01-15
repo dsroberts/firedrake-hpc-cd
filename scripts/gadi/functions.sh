@@ -11,6 +11,19 @@ function __petsc_post_build_in_container_hook() {
 }
 
 function __firedrake_post_build_in_container_hook() {
+    ###    a.) Link in entire python3 build - <Firedrake specific>
+    ###    We do this as otherwise the python3 venv binary will
+    ###    find itself linked to the libpython3.11.so in the OS image
+    ln -s "${PYTHON3_BASE}/lib/libpython3.so" venv/lib
+    ln -s "${PYTHON3_BASE}/lib/libpython${PY_VERSION}.so" venv/lib
+    ln -s "${PYTHON3_BASE}/lib/libpython${PY_VERSION}.so.1.0" venv/lib
+    for i in "${PYTHON3_BASE}/lib/python${PY_VERSION}"/*; do
+        [[ ! -e "venv/lib/python${PY_VERSION}/${i##*/}" ]] && ln -s "${i}" "venv/lib/python${PY_VERSION}/${i##*/}"
+    done
+    for i in "${PYTHON3_BASE}/include/python${PY_VERSION}"/*; do
+        [[ ! -e "venv/include/python${PY_VERSION}/${i##*/}" ]] && ln -s "${i}" "venv/include/python${PY_VERSION}/${i##*/}"
+    done
+
     ###    b.) Resolve all shared object links
     resolve_libs "${APP_IN_CONTAINER_PATH}/${TAG}" "${APP_IN_CONTAINER_PATH}/${TAG}:${PETSC_DIR}"
 
@@ -33,6 +46,7 @@ function __firedrake_post_build_in_container_hook() {
     mv venv/lib/Intel/* venv/lib
     mv venv/include/Intel/* venv/include
     rmdir venv/{lib,include}/Intel
+
 }
 
 function __firedrake_extra_squashfs_contents() {

@@ -55,20 +55,28 @@ done
 ### 3.) Load dependent modules
 ### This path might not exist inside of the container
 if [[ -d "${MODULE_PREFIX}/petsc" ]]; then
-    if [[ $( type -t __firedrake_pre_petsc_version_check ) == function ]]; then
-        __firedrake_pre_petsc_version_check
-    fi
-    module use "${MODULE_PREFIX}"
-    module load petsc${APP_BUILD_TAG}
-    ### Get petsc module name
-    export PETSC_MODULE=$(module -t list 2>&1 | grep petsc)
-    export PETSC_TAG="${PETSC_MODULE#*/}"
-    if [[ "${VERSION_TAG}" ]]; then
-        export PETSC_DIR_SUFFIX="${PETSC_TAG//$VERSION_TAG/}"
-    else
-        export PETSC_DIR_SUFFIX="${PETSC_TAG}"
-    fi
-    module unload petsc${APP_BUILD_TAG}
+    ### Prevent this block from altering the script environment
+    while read key value; do
+        [[ "${key}" == PETSC_MODULE ]] && export PETSC_MODULE="${value}"
+        [[ "${key}" == PETSC_TAG ]] && export PETSC_TAG="${value}"
+        [[ "${key}" == PETSC_DIR_SUFFIX ]] && export PETSC_DIR_SUFFIX="${value}"
+    done < <(
+        if [[ $(type -t __firedrake_pre_petsc_version_check) == function ]]; then
+            __firedrake_pre_petsc_version_check
+        fi
+        module use "${MODULE_PREFIX}"
+        module load petsc${APP_BUILD_TAG}
+        ### Get petsc module name
+        petsc_module=$(module -t list 2>&1 | grep petsc)
+        echo PETSC_MODULE "${petsc_module}"
+        petsc_tag="${petsc_module#*/}"
+        echo PETSC_TAG "${petsc_tag}"
+        if [[ "${VERSION_TAG}" ]]; then
+            echo PETSC_DIR_SUFFIX "${petsc_tag//$VERSION_TAG/}"
+        else
+            echo PETSC_DIR_SUFFIX "${petsc_tag}"
+        fi
+    )
 fi
 
 ### 4.) Define 'inner' function(s)
@@ -102,12 +110,12 @@ function inner1() {
 
     ### i2.) Install
     cd "${APP_IN_CONTAINER_PATH}/${TAG}"
-    python${PY_VERSION} firedrake/scripts/firedrake-install --honour-petsc-dir --mpiexec=${MPIRUN} --mpicc=$( which mpicc ) --mpicxx=$( which mpicxx ) --mpif90=$( which mpif90 ) --no-package-manager ${OPTS_64BIT} --venv-name venv
+    python${PY_VERSION} firedrake/scripts/firedrake-install --honour-petsc-dir --mpiexec=${MPIRUN} --mpicc=$(which mpicc) --mpicxx=$(which mpicxx) --mpif90=$(which mpif90) --no-package-manager ${OPTS_64BIT} --venv-name venv
     source "${APP_IN_CONTAINER_PATH}/${TAG}/venv/bin/activate"
     pip3 install jupyterlab assess gmsh imageio jupytext openpyxl pandas pyvista[all] shapely pyroltrilinos siphash24 jupyterview xarray trame_jupyter_extension pygplates
 
     ### i3.) Installation repair
-    if [[ $( type -t __firedrake_post_build_in_container_hook ) == function ]]; then
+    if [[ $(type -t __firedrake_post_build_in_container_hook) == function ]]; then
         __firedrake_post_build_in_container_hook
     fi
 
@@ -159,7 +167,7 @@ first_dir="/${tmp%%/*}"
 
 module load "${SINGULARITY_MODULE}"
 
-if [[ $( type -t __firedrake_pre_container_launch_hook ) == function ]]; then
+if [[ $(type -t __firedrake_pre_container_launch_hook) == function ]]; then
     __firedrake_pre_container_launch_hook
 fi
 
@@ -169,7 +177,7 @@ singularity -s exec --bind "${BIND_STR},${OVERLAY_BASE}:${first_dir}" "${BUILD_C
 mkdir -p "${SQUASHFS_PATH}"
 mv "${OVERLAY_EXTERNAL_PATH}/${TAG}" "${SQUASHFS_PATH}/${SQUASHFS_APP_DIR}"
 
-if [[ $( type -t __firedrake_extra_squashfs_contents ) == function ]]; then
+if [[ $(type -t __firedrake_extra_squashfs_contents) == function ]]; then
     __firedrake_extra_squashfs_contents
 fi
 
@@ -180,7 +188,8 @@ if [[ "${FD_INSTALL_DRY_RUN}" ]]; then
     cp "${APP_NAME}.sqsh" "${BUILD_STAGE_DIR}/${APP_NAME}-${TAG}${VERSION_TAG}.sqsh"
     ### Save modules to a dummy location
     export MODULE_FILE="${BUILD_STAGE_DIR}/${APP_NAME}${APP_BUILD_TAG}/${TAG}${MODULE_SUFFIX}"
-    exit
+    make_modulefiles
+    exit 0
 fi
 ### 10.) Create symlinks & modules
 mkdir -p "${APP_IN_CONTAINER_PATH}"

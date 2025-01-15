@@ -2,13 +2,13 @@
 ###
 ### -- Compilers        |   -- Source/destination paths   |   -- Optional settings
 ###=====================|=================================|=======================================
-### MPI_MODULE          |   APPS_PREFIX                   |   MODULE_SUFFIX
-### PY_MODULE           |   MODULE_PREFIX                 |   MODULE_USE_PATHS
-### COMPILER_MODULE     |   SQUASHFS_PATH                 |   EXTRA_MODULES
-### SINGULARITY_MODULE  |   OVERLAY_BASE                  |   get_system_specific_petsc_flags()
-### PY_VERSION          |   BUILD_CONTAINER_PATH          |
-### BUILD_NCPUS         |   BUILD_STAGE_DIR               |
-###                     |   EXTRACT_DIR                   |
+### MPI_MODULE          |   APPS_PREFIX                   |   VERSION_TAG
+### PY_MODULE           |   MODULE_PREFIX                 |   MODULE_SUFFIX
+### COMPILER_MODULE     |   SQUASHFS_PATH                 |   MODULE_USE_PATHS
+### SINGULARITY_MODULE  |   OVERLAY_BASE                  |   EXTRA_MODULES
+### PY_VERSION          |   BUILD_CONTAINER_PATH          |   COMPILER_OPT_FLAGS
+### BUILD_NCPUS         |   BUILD_STAGE_DIR               |   PYOP2_COMPILER_OPT_FLAGS
+###                     |   EXTRACT_DIR                   |   get_system_specific_petsc_flags()
 ###                     |   bind_dirs                     |
 
 export MPI_MODULE=cray-mpich/8.1.27

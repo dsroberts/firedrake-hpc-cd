@@ -1,5 +1,5 @@
 function copy_and_replace() {
-    ### Copies the file in $1 to the location in $2 and replaces any occurence
+    ### Copies the file in $1 to the location in $2 and replaces any occurrence
     ### of __${3}__, __${4}__... with the contents of those environment variables
     in="${1}"
     out="${2}"
