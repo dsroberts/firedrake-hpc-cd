@@ -128,7 +128,18 @@ apps
     └── petsc-20241009.sqsh
 
 ```
-The `.sqsh` files are the squashfs that contain the complete firedrake and petsc installs. The `20241030` and `20241009` links are named for the date of the git commit corresponding to the respective firedrake and petsc build. Note that they link to `/opt`. In the final stage of the build, the installation is moved from its path in `$APPS_PREFIX` to `/opt` such that the top-level path in `$APPS_PREFIX` remains available when firedrake is run. These symlinks do not resolve outside of the containerised environment, but do resolve when anything from the corresponding `firedrake-scripts` directory. The `firedrake-scripts` directory contains symlinks to the `launcher.sh` script, one for each command present in the firedrake virtual environment `bin` directory. The `launcher.sh` script determines which command was run, then launches singularity with the appropriate bind mounting and overlay flags, then runs that command from inside the containerised environment.
+The `.sqsh` files are the squashfs that contain the complete firedrake and petsc installs. The `20241030` and `20241009` links are named for the date of the git commit corresponding to the respective firedrake and petsc build. Note that they link to `/opt`. In the final stage of the build, the installation is moved from its path in `$APPS_PREFIX` to `/opt` such that the top-level path in `$APPS_PREFIX` remains available when firedrake is run. These symlinks do not resolve outside of the containerised environment, but do resolve when the squashfs is mounted via Singularity. The `firedrake-scripts` directory contains symlinks to the `launcher.sh` script, one for each command present in the firedrake virtual environment `bin` directory. The `launcher.sh` script determines which command was run, then launches singularity with the appropriate bind mounting and overlay flags, then runs that command from inside the containerised environment.
+
+### Modules
+A system must proved a `firedrake-base` and `petsc-base` files in `modules/$FD_SYSTEM`. These files are able to use environment variable names as template parameters, which will be replaced with the contents of those environment variables when the module files are created. E.g. The line
+```
+module load __SINGULARITY_MODULE__ __COMPILER_MODULE__
+```
+in the module templates becomes
+```
+module load singularity intel-compiler
+```
+in the final module files where `$SINGULARITY_MODULE=singularity` and `$COMPILER_MODULE=intel-compiler`. The date of the git commit of the source tree used for the build is used to set the default module version. The 7-character short commit hash is set as an alias, as are any tags present corresponding to that commit at build time. If `$VERSION_TAG` is undefined, the current build will be set to the default version. If `$VERSION_TAG` is defined, all module names and alias versions will be tagged with `$VERSION_TAG`, the current build will be aliased to `firedrake/$VERSION_TAG` or `petsc/$VERSION_TAG`. If `$DO_64BIT` is true, the modules will be named `firedrake-64bit` and `petsc-64bit` respectively.
 
 ### `launcher_conf.sh`
 
@@ -142,3 +153,13 @@ export CONTAINER_PATH=${CONTAINER_PATH:-/path/to/base.sif}
 * `bind_dirs` -  - a bash array of directories that will be bind-mounted in place when singularity is launched. This should be the same as `bind_dirs` from `build-config.sh`, except with the top-level path from `$APPS_PREFIX` added to the array entries.
 
 The `launcher.sh` script also contains a hook system that allows the behaviour of different commands to be modified. The script searches the `overrides` subdirectory for files named either `<command>.sh` or `<command>.config.sh` where `<command>` is the name of the symlink used to invoke `launcher.sh`. A script named `<command>.sh` will override the singularity launch behaviour of `launcher.sh` completely, whereas a script named `<command>.config.sh` will be sourced and return control to `launcher.sh`.
+
+### Global `functions.sh`
+
+A set of universal functions is provided in `scripts/functions.sh` that perform actions common to all platforms. If necessary, these functions can be overridden by a function from `scripts/$FD_SYSTEM/functions` script. The functions provided in this script are
+* `copy_and_replace` - This function takes an input template and an output file as its first 2 arguments and an arbitrary number of environment variable names beyond that. For each environment variable, it will replace the string `__VARIABLE__` in the template with the contents of `$VARIABLE` in the destination file.
+* `copy_squash_to_overlay` - A convenience function that takes a squashfs name as its first argument, a directory within the squashfs as its second argument and a target path for that directory as its third argument. This function extracts the contents of a directory within a squashfs to a destination. Used when building firedrake to ensure the appropriate petsc build is available.
+* `copy_dir_to_overlay` - Copy the contents of a directory specified in the first argument to a target specified in the second argument. Used for ensuring the availability of files that would otherwise not be accessible due to a bind mount during the build process.
+* `fix_apps_perms` - This function takes an arbitrary number of files or directories as arguments and disables group write permission on all of them. This function should be overridden on a system that supports ACLs.
+* `resolve_libs` - This function sets the `DT_RPATH` of all ELF binaries in the directory specified in the first argument to subdirectories of the colon-separated list of directories in the second argument that contain libraries on which those shared objects depend. Running this on an installation removes the need for a module to specify `$LD_LIBRARY_PATH`.
+* `make_modulefiles` - This function takes no arguments and creates the module files and aliases and defaults for the current build. If `$MODULE_SUFFIX` is `.lua`, it will use Lmod sematics, otherwise it will use TCL Environment Module semantics. If the `modules/$FD_SYSTEM` directory provides `firedrake-common` or `petsc-common` files, those files will also be copied unaltered to the same directory as the module file.
