@@ -69,10 +69,14 @@ export BUILD_CONTAINER_PATH="${APPS_PREFIX}/petsc/etc"
 export BUILD_STAGE_DIR=/scratch/fp50/dr4292/staging
 export WRITERS_GROUP=xd2
 
+### Otherwise cmake can't find MPI when building libsupermesh via. pip
+export CMAKE_ARGS='-DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_Fortran_COMPILER=mpif90'
+### System ninja install is too old for Fortran
+export CMAKE_GENERATOR='Unix Makefiles'
 
 ### pnetcdf will not compile against oneAPI fortran compiler
 ### with system autoconf - see https://community.intel.com/t5/Intel-Fortran-Compiler/ifx-2021-1-beta04-HPC-Toolkit-build-error-with-loopopt/td-p/1184181
-declare -a EXTRA_MODULES=( cmake/3.24.2 autoconf/2.72 "${MKL_MODULE}" )
+declare -a EXTRA_MODULES=( autoconf/2.72 "${MKL_MODULE}" )
 export EXTRA_MODULES
 
 declare -a bind_dirs=("/etc" "/half-root" "/local" "/ram" "/run" "/system" "/usr" "/var/lib/sss" "/var/lib/rpm" "/var/run/munge" "/sys/fs/cgroup" "/iointensive")

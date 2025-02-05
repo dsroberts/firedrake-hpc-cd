@@ -106,11 +106,13 @@ function inner1() {
     export FIREDRAKE_CI_TESTS=1
 
     export MPIRUN="${MPIRUN:-mpirun}"
+    mpirun_path=$( which mpirun )
+    export MPI_HOME=$( realpath ${mpirun_path%/*}/.. )
     unset PYTHONPATH
 
     ### i2.) Install
     cd "${APP_IN_CONTAINER_PATH}/${TAG}"
-    python${PY_VERSION} firedrake/scripts/firedrake-install --honour-petsc-dir --mpiexec=${MPIRUN} --mpicc=$(which mpicc) --mpicxx=$(which mpicxx) --mpif90=$(which mpif90) --no-package-manager ${OPTS_64BIT} --venv-name venv
+    python${PY_VERSION} firedrake/scripts/firedrake-install --honour-petsc-dir --mpiexec=${MPIRUN} --mpihome=${MPI_HOME} --mpicc=$(which mpicc) --mpicxx=$(which mpicxx) --mpif90=$(which mpif90) --no-package-manager ${OPTS_64BIT} --venv-name venv
     source "${APP_IN_CONTAINER_PATH}/${TAG}/venv/bin/activate"
     pip3 install jupyterlab assess gmsh imageio jupytext openpyxl pandas pyvista[all] shapely pyroltrilinos siphash24 jupyterview xarray trame_jupyter_extension pygplates
 
