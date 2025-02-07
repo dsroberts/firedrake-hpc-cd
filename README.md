@@ -87,10 +87,12 @@ The build system is configured primarily by environmnet variables, set by the `s
 The `scripts/$FD_SYSTEM/functions.sh` script defines any hooks or function overrides required to complete the build on a given system. All hooks are optional, and this file can be blank, though it is not likely that a generic configuration will be able to build firedrake on any given system. Hooks are functions denoted by a double-underscore followed by the name of the software being built, then a short description of when the hook is run. Current hooks in the build system are:
 * `__petsc_post_build_in_container_hook` - A function run immediately after `make` completes for petsc, but before leaving the container environment.
 * `__petsc_pre_container_launch_hook` - A function run immediately before `singularity` is launched for the petsc build.
+* `__petsc_post_build_hook` - A function run at the very end of the petsc build script after the application has been built and deployed.
 * `__firedrake_pre_petsc_version_check` - A function run immediately before attempting to load the petsc module during `build-firedrake.sh` outside of the containerised environment.
 * `__firedrake_post_build_in_container_hook` - A function run immediately after firedrake's dependencies are `pip install`'d, but before leaving the container environment.
 * `__firedrake_pre_container_launch_hook` - A function run immediately before `singularity` is launched for the firedrake build.
 * `__firedrake_extra_squashfs_contents` - A function run after the firedrake build is moved to its final location in `$SQUASHFS_PATH` that adds any additional contents to the environment before the squashfs is created.
+* `__firedrake_post_build_hook` - A function run at the very end of the firedrake build script after the application has been built and deployed.
 
 If the existing hooks are not sufficient, additional hooks can be added as necessary at other stages of the build process. Hooks must be gated as follows:
 ```

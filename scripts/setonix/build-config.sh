@@ -28,7 +28,7 @@ if [[ $compiler_type == "gcc" ]]; then
     export PYOP2_COMPILER_OPT_FLAGS='"-fPIC -O3 -march=native -mtune=native -ffast-math"'
 
     function get_system_specific_petsc_flags() {
-        export SYSTEM_SPECIFIC_FLAGS="--with-blas-lib=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.so --with-lapack-lib=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.so --with-scalapack-include=${CRAY_LIBSCI_PREFIX_DIR}/include --with-scalapack-lib=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu_mpi.so"
+        export SYSTEM_SPECIFIC_FLAGS=("--with-blas-lib=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.so" "--with-lapack-lib=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.so" "--with-scalapack-include=${CRAY_LIBSCI_PREFIX_DIR}/include" "--with-scalapack-lib=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu_mpi.so")
     }
 fi
 
@@ -56,15 +56,20 @@ export HYDRA_LAUNCHER="fork"
 
 export BUILD_NCPUS="${SLURM_NPROCS}"
 
+### Otherwise cmake can't find MPI when building libsupermesh via. pip
+export CMAKE_ARGS='-DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_Fortran_COMPILER=mpif90 -DCMAKE_Fortran_FLAGS=-fallow-argument-mismatch'
+### System ninja install is too old for Fortran
+export CMAKE_GENERATOR='Unix Makefiles'
+
 ### Limited bits from pawseyenv module to get packages found
 export LMOD_PACKAGE_PATH="/software/setonix/lmod-extras"
 export LMOD_CUSTOM_COMPILER_GNU_8_0_PREFIX="/software/setonix/2024.05/modules/zen3/${COMPILER_MODULE}/utilities"
 export MYSOFTWARE="/software/projects/${PAWSEY_PROJECT}/${USER}"
-declare -a MODULE_USE_PATHS=( "/software/projects/pawsey0821/modules" "/software/setonix/2024.05/pawsey/modules" )
+declare -a MODULE_USE_PATHS=("/software/projects/pawsey0821/modules" "/software/setonix/2024.05/pawsey/modules")
 export MODULE_USE_PATHS
 
 ### Need compiler module loaded ahead of time to resolve cmake and autoconf
-declare -a EXTRA_MODULES=( "${PRGENV_MODULE}" "${COMPILER_MODULE}" "cmake/3.27.7" "autoconf/2.69" "libfabric/1.15.2.0" )
+declare -a EXTRA_MODULES=("${PRGENV_MODULE}" "${COMPILER_MODULE}" "cmake/3.27.7" "autoconf/2.69" "libfabric/1.15.2.0")
 export EXTRA_MODULES
 
-declare -a bind_dirs=("/opt/admin-pe" "/opt/AMD" "/opt/amdgpu" "/opt/cray" "/opt/modulefiles" "/opt/pawsey" "/bin" "/boot" "/etc" "/lib" "/lib64" "/local" "/pe" "/ram" "/rootfs.rw" "/root_ro" "/run" "/scratch" "/usr" "/sys/fs/cgroup" "/var/lib/sss" "/var/run/munge" "/var/lib/ca-certificates" )
+declare -a bind_dirs=("/opt/admin-pe" "/opt/AMD" "/opt/amdgpu" "/opt/cray" "/opt/modulefiles" "/opt/pawsey" "/bin" "/boot" "/etc" "/lib" "/lib64" "/local" "/pe" "/ram" "/rootfs.rw" "/root_ro" "/run" "/scratch" "/usr" "/sys/fs/cgroup" "/var/lib/sss" "/var/run/munge" "/var/lib/ca-certificates")

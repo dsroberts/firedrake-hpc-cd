@@ -159,3 +159,6 @@ make_modulefiles
 fix_apps_perms "${MODULE_FILE%/*}" "${APP_IN_CONTAINER_PATH}"
 
 ### 12.) Anything else?
+if [[ $(type -t __petsc_post_build_hook) == function ]]; then
+    __petsc_post_build_hook
+fi

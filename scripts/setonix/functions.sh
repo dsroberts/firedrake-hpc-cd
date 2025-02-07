@@ -29,3 +29,18 @@ function __firedrake_post_build_in_container_hook() {
 ###    b.) Resolve all shared object links
     resolve_libs "${APP_IN_CONTAINER_PATH}/${TAG}" "${APP_IN_CONTAINER_PATH}/${TAG}:${PETSC_DIR}"
 }
+
+function build_cleanup() {
+    rm -rf "${SQUASHFS_PATH}" "${OVERLAY_BASE}"
+    for fn in "${EXTRACT_DIR}"/*; do
+        [[ -O "${fn}" ]] && rm -rf "${fn}"
+    done
+}
+
+function __petsc_post_build_hook() {
+    build_cleanup
+}
+
+function __firedrake_post_build_hook() {
+    build_cleanup
+}

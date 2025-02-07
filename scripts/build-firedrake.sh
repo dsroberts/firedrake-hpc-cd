@@ -79,6 +79,10 @@ if [[ -d "${MODULE_PREFIX}/petsc" ]]; then
     )
 fi
 
+### The Firedrake module does not incorporate a version tag, but it is required
+### to load a petsc module, so unset that here
+unset VERSION_TAG
+
 ### 4.) Define 'inner' function(s)
 function inner1() {
 
@@ -106,8 +110,8 @@ function inner1() {
     export FIREDRAKE_CI_TESTS=1
 
     export MPIRUN="${MPIRUN:-mpirun}"
-    mpirun_path=$( which mpirun )
-    export MPI_HOME=$( realpath ${mpirun_path%/*}/.. )
+    mpirun_path=$(which "${MPIRUN}")
+    export MPI_HOME=$(realpath ${mpirun_path%/*}/..)
     unset PYTHONPATH
 
     ### i2.) Install
@@ -187,7 +191,7 @@ mksquashfs squashfs-root "${APP_NAME}.sqsh" -no-fragments -no-duplicates -no-spa
 
 if [[ "${FD_INSTALL_DRY_RUN}" ]]; then
     mkdir -p "${BUILD_STAGE_DIR}/${APP_NAME}${APP_BUILD_TAG}"
-    cp "${APP_NAME}.sqsh" "${BUILD_STAGE_DIR}/${APP_NAME}-${TAG}${VERSION_TAG}.sqsh"
+    cp "${APP_NAME}.sqsh" "${BUILD_STAGE_DIR}/${APP_NAME}-${TAG}.sqsh"
     ### Save modules to a dummy location
     export MODULE_FILE="${BUILD_STAGE_DIR}/${APP_NAME}${APP_BUILD_TAG}/${TAG}${MODULE_SUFFIX}"
     make_modulefiles
@@ -214,3 +218,7 @@ fix_apps_perms "${MODULE_FILE%/*}" "${APP_IN_CONTAINER_PATH}" "${APP_IN_CONTAINE
 
 ### 12.) Anything else?
 singularity -s exec --bind "${BIND_STR},${first_dir}" --overlay="${APP_IN_CONTAINER_PATH}/${APP_NAME}-${TAG}.sqsh" "${BUILD_CONTAINER_PATH}/base.sif" "${this_script}" --inner2
+
+if [[ $(type -t __firedrake_post_build_hook) == function ]]; then
+    __firedrake_post_build_hook
+fi
