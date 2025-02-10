@@ -1,0 +1,5 @@
+#%Module1.0
+
+module load firedrake__APP_BUILD_TAG__/__FIREDRAKE_TAG__
+prepend-path PYTHONPATH __APP_IN_CONTAINER_PATH__/gadopt
+setenv GADOPT_BASE __APP_IN_CONTAINER_PATH__/gadopt
