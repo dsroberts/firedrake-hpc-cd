@@ -127,20 +127,10 @@ function inner1() {
 
 }
 
-function inner2() {
-
-    source "/opt/${SQUASHFS_APP_DIR}/venv/bin/activate"
-    pip3 install --target "${APP_IN_CONTAINER_PATH}/gadopt" --upgrade --no-deps gadopt
-
-}
-
 ### 5.) Run inner function(s)
 if [[ "$#" -ge 1 ]]; then
     if [[ "${1}" == '--inner' ]]; then
         inner1
-        exit 0
-    elif [[ "${1}" == '--inner2' ]]; then
-        inner2
         exit 0
     fi
 fi
@@ -217,8 +207,6 @@ done
 fix_apps_perms "${MODULE_FILE%/*}" "${APP_IN_CONTAINER_PATH}" "${APP_IN_CONTAINER_PATH}"-scripts
 
 ### 12.) Anything else?
-singularity -s exec --bind "${BIND_STR},${first_dir}" --overlay="${APP_IN_CONTAINER_PATH}/${APP_NAME}-${TAG}.sqsh" "${BUILD_CONTAINER_PATH}/base.sif" "${this_script}" --inner2
-
 if [[ $(type -t __firedrake_post_build_hook) == function ]]; then
     __firedrake_post_build_hook
 fi

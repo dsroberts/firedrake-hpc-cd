@@ -56,7 +56,7 @@ export MKL_MODULE=intel-mkl/"${mkl_version}"
 py_ver="${PY_MODULE##*/}"
 export PY_VERSION="${py_ver%.*}"
 
-export EXTRACT_DIR="${PBS_JOBFS}"
+[[ "${PBS_JOBFS}" ]] && export EXTRACT_DIR="${PBS_JOBFS}" || export EXTRACT_DIR="${TMPDIR}"
 export BUILD_NCPUS="${PBS_NCPUS}"
 export APPS_PREFIX=/g/data/fp50/apps
 export MODULE_PREFIX=/g/data/fp50/modules

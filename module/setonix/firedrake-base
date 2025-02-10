@@ -26,9 +26,6 @@ if ( mygadopt ~= "" ) then
     if ( isFile(pathJoin(mygadopt,"gadopt/__init__.py") )) then
         prepend_path("PYTHONPATH",mygadopt)
     else
-        LmodWarning("ERROR! gadopt/__init__.py not found at " ..  os.getenv("MY_GADOPT") .. ": using default G-ADOPT installation")
-        prepend_path("PYTHONPATH",pathJoin(prefix,"gadopt"))
+        LmodWarning("ERROR! gadopt/__init__.py not found at " ..  os.getenv("MY_GADOPT") .. ": please load gadopt module")
     end
-else
-    prepend_path("PYTHONPATH",pathJoin(prefix,"gadopt"))
 end

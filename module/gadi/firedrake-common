@@ -25,9 +25,6 @@ if { [ info exists env(MY_GADOPT) ] } {
     if { [ file exists $::env(MY_GADOPT)/gadopt/__init__.py ] } {
         prepend-path PYTHONPATH $::env(MY_GADOPT)
     } else {
-        puts stderr "ERROR! gadopt/__init__.py not found at $::env(MY_GADOPT): using default G-ADOPT installation"
-        prepend-path PYTHONPATH $prefix/gadopt
+        puts stderr "ERROR! gadopt/__init__.py not found at $::env(MY_GADOPT): please load g-adopt module"
     }
-} else {
-    prepend-path PYTHONPATH $prefix/gadopt
 }
