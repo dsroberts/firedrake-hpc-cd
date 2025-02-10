@@ -122,7 +122,7 @@ done
 ### Remove trailing comma
 export BIND_STR="${bind_str::-1}"
 
-### Derive first directory of absolute path outside of the contaner
+### Derive first directory of absolute path outside of the container
 tmp="${APP_IN_CONTAINER_PATH:1}"
 first_dir="/${tmp%%/*}"
 

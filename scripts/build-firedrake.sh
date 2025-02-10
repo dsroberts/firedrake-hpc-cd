@@ -30,8 +30,13 @@ if [[ ! -d "${EXTRACT_DIR}/${APP_NAME}" ]]; then
     tar -xf "${BUILD_STAGE_DIR}/${APP_NAME}.tar"
 fi
 pushd "${APP_NAME}"
-### Tag with date of commit
-export TAG=$(git show --no-patch --format=%cd --date=format:%Y%m%d)
+if [[ "${BUILD_BRANCH}" ]]; then
+    git checkout "${BUILD_BRANCH}"
+    export TAG="${BUILD_BRANCH//\//_}"
+else
+    ### Tag with date of commit
+    export TAG=$(git show --no-patch --format=%cd --date=format:%Y%m%d)
+fi
 ### matches short commit length on github
 export GIT_COMMIT=$(git rev-parse --short=7 HEAD)
 export REPO_TAGS=($(git tag --points-at HEAD))
@@ -82,6 +87,14 @@ fi
 ### The Firedrake module does not incorporate a version tag, but it is required
 ### to load a petsc module, so unset that here
 unset VERSION_TAG
+
+### If we're building from a firedrake branch, move the module file so it does not
+### appear unless specifically asked.
+if [[ "${BUILD_BRANCH}" ]]; then
+    module_dirname=${MODULE_PREFIX##*/}
+    export MODULE_PREFIX="${MODULE_PREFIX/$module_dirname/branch_$module_dirname}"
+    export MODULE_FILE="${MODULE_PREFIX}/${APP_NAME}${APP_BUILD_TAG}/${TAG}${MODULE_SUFFIX}"
+fi
 
 ### 4.) Define 'inner' function(s)
 function inner1() {
@@ -157,7 +170,7 @@ done
 ### Remove trailing comma
 export BIND_STR="${bind_str::-1}"
 
-### Derive first directory of absolute path outside of the contaner
+### Derive first directory of absolute path outside of the container
 tmp="${APP_IN_CONTAINER_PATH:1}"
 first_dir="/${tmp%%/*}"
 

@@ -114,7 +114,7 @@ function make_modulefiles() {
     mkdir -p "${MODULE_FILE%/*}"
     ### A system must provide an APP_NAME-base module file - everything else is optional - module file must already have ${MODULE_SUFFIX} baked in.
     copy_and_replace "${here}/../module/${FD_SYSTEM}/${APP_NAME}-base" "${MODULE_FILE}" APP_IN_CONTAINER_PATH COMPILER_MODULE SINGULARITY_MODULE MPI_MODULE TAG VERSION_TAG PYOP2_COMPILER_OPT_FLAGS PETSC_MODULE
-    if [[ -z "${VERSION_TAG}" ]]; then
+    if [[ -z "${VERSION_TAG}" && -z "${BUILD_BRANCH}" ]]; then
         if [[ "${MODULE_SUFFIX}" == .lua ]]; then
             rm -f ${MODULE_FILE%/*}/default
             ln -sf "${TAG}" "${MODULE_FILE%/*}/default"
