@@ -66,7 +66,7 @@ export OVERLAY_BASE="${EXTRACT_DIR}/overlay"
 ### variable inside the build scripts as some of them load & unload
 ### a petsc module.
 export BUILD_CONTAINER_PATH="${APPS_PREFIX}/petsc/etc"
-export BUILD_STAGE_DIR=/scratch/fp50/dr4292/staging
+export BUILD_STAGE_DIR=/scratch/fp50/staging
 export WRITERS_GROUP=xd2
 
 ### Otherwise cmake can't find MPI when building libsupermesh via. pip

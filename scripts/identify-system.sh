@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 ###
-### Put whatever you need here to determine what system you're runnning.
+### Put whatever you need here to determine what system you're running.
 ### The install scripts expect the variable FD_SYSTEM to be set in order
 ### to pick which config files its going to use.
 

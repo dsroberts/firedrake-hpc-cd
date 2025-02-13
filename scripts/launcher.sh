@@ -95,7 +95,7 @@ fi
 $debug "cmd_to_run = " "${cmd_to_run[@]}"
 
 ### Handle the case where we've been invoked directly. Make sure the container
-### we need is on path, and that CONDA_BASE is set so that the right thing
+### we need is on path, and that FIREDRAKE_BASE is set so that the right thing
 ### runs in the container. If we haven't been directly invoked, this does
 ### nothing - Unless told otherwise
 ###
@@ -113,11 +113,11 @@ $debug "CONTAINER_OVERLAY_PATH after override check = " ${CONTAINER_OVERLAY_PATH
 if [[ -d /.singularity.d ]]; then
     ### Short circuit detection
     ### In some cases (e.g. mpi processes launched from orterun), launcher will be invoked from
-    ### within the container. The tell-tale sign for this is if /opt/singularity is missing.
+    ### within the container. The tell-tale sign for this is if /.singularity.d is present.
     ### The only way this can happen is if we've tried to run something that has come
     ### from the bin directory in scripts/env.d/bin/ - the only place these can come from is the
-    ### bin directory of the active conda env, so just reset the path to that but keep the 
-    ### original argv[0] so virtual envs work.
+    ### bin directory of the active firedrake env, so just reset the path to that but keep the
+    ### original argv[0].
     cmd_to_run[0]="${VIRTUAL_ENV}/bin/${cmd_to_run[0]##*/}"
     $debug "Short circuit detected, running: " "exec -a" "${0}" "${cmd_to_run[@]}"
     #exec -a "${0}" "${cmd_to_run[@]}"
