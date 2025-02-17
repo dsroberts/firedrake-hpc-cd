@@ -14,7 +14,7 @@ jobs:
         chmod 600 ~/.ssh/gadi.key
         echo "${{secrets.GADI_HOST_KEY}}" >> ~/.ssh/known_hosts
         chmod 600 ~/.ssh/known_hosts
-        cat >>~/.ssh/config <<EOF
+        cat > ~/.ssh/config <<EOF
         Host gadi
           Hostname gadi.nci.org.au
           User ${{secrets.GADI_USER}}
@@ -48,4 +48,4 @@ jobs:
         USER: ${{secrets.GADI_USER}}
     - name: Move petsc.tar to where its expected
       run: |
-        ssh -i gadi gadi "source ${{secrets.GADI_REPO_PATH}}/scripts/gadi/build-config.sh; mv ${{secrets.GADI_REPO_PATH}}/petsc.tar \${BUILD_STAGE_DIR}"
+        ssh gadi "source ${{secrets.GADI_REPO_PATH}}/scripts/gadi/build-config.sh; mv ${{secrets.GADI_REPO_PATH}}/petsc.tar \${BUILD_STAGE_DIR}"
