@@ -23,12 +23,8 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
     - name: Sync repository to Gadi
-      uses: up9cloud/action-rsync@v1.4
-      env:
-        HOST: gadi.nci.org.au
-        TARGET: ${{secrets.GADI_REPO_PATH}}
-        KEY: ${{secrets.GADI_TESTING_KEY}}
-        USER: ${{secrets.GADI_USER}}
+      run: |
+        rsync --verbose --recursive --links --times --specials --partial --progress --one-file-system --hard-links ./ gadi:${{secrets.GADI_REPO_PATH}}
     - name: Checkout PETSc
       uses: actions/checkout@v4
       with:
@@ -48,4 +44,4 @@ jobs:
         USER: ${{secrets.GADI_USER}}
     - name: Move petsc.tar to where its expected
       run: |
-        ssh -vvv gadi "source ${{secrets.GADI_REPO_PATH}}/scripts/gadi/build-config.sh; mv ${{secrets.GADI_REPO_PATH}}/petsc.tar \${BUILD_STAGE_DIR}"
+        ssh gadi "source ${{secrets.GADI_REPO_PATH}}/scripts/gadi/build-config.sh; mv ${{secrets.GADI_REPO_PATH}}/petsc.tar \${BUILD_STAGE_DIR}"
