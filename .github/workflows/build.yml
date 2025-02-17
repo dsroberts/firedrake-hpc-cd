@@ -22,8 +22,6 @@ jobs:
         EOF
     - name: Checkout repository
       uses: actions/checkout@v4
-      with:
-        path: ${{ github.repository }}
     - name: Sync repository to Gadi
       uses: up9cloud/action-rsync@v1.4
       env:
@@ -48,3 +46,6 @@ jobs:
         TARGET: ${{secrets.GADI_REPO_PATH}}
         KEY: ${{secrets.GADI_TESTING_KEY}}
         USER: ${{secrets.GADI_USER}}
+    - name: Move petsc.tar to where its expected
+      run: |
+        ssh gadi "source ${{secrets.GADI_REPO_PATH}}/scripts/gadi/build-config.sh; mv ${{secrets.GADI_REPO_PATH}}/petsc.tar \${BUILD_STAGE_DIR}"
