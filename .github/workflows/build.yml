@@ -1,0 +1,18 @@
+name: Build PETSc & Firedrake
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Checkout PETSc
+        uses: actions/checkout@v4
+        with: 
+          repository: firedrakeproject/petsc
+      - name: Package Petsc
+        run: |
+          tree
