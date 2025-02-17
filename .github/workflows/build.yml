@@ -7,12 +7,41 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps: 
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Checkout PETSc
-        uses: actions/checkout@v4
-        with: 
-          repository: firedrakeproject/petsc
-      - name: Package Petsc
-        run: |
-          tree
+    - name: Configure SSH
+      run: |
+        mkdir -p ~/.ssh/
+        echo "${{secrets.GADI_TESTING_KEY}}" > ~/.ssh/gadi.key
+        chmod 600 ~/.ssh/gadi.key
+        echo "${{secrets.GADI_HOST_KEY}}" >> ~/.ssh/known_hosts
+        chmod 600 ~/.ssh/known_hosts
+        cat >>~/.ssh/config <<EOF
+        Host gadi
+          Hostname gadi.nci.org.au
+          User ${{secrets.GADI_USER}}
+          IdentityFile ~/.ssh/gadi.key
+        EOF
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Sync repository to Gadi
+      uses: up9cloud/action-rsync@v1.4
+      env:
+        HOST: gadi.nci.org.au
+        TARGET: ${{secrets.GADI_REPO_PATH}}
+        KEY: ${{secrets.GADI_TESTING_KEY}}
+        USER: ${{secrets.GADI_USER}}
+    - name: Checkout PETSc
+      uses: actions/checkout@v4
+      with:
+        repository: firedrakeproject/petsc
+        ref: firedrake
+    - name: Package Petsc
+      run: |
+        tar -cf /tmp/petsc.tar .
+    - name: Sync petsc to Gadi
+      uses: up9cloud/action-rsync@v1.4
+      env:
+        SOURCE: /tmp/petsc.tar
+        HOST: gadi.nci.org.au
+        TARGET: ${{secrets.GADI_REPO_PATH}}
+        KEY: ${{secrets.GADI_TESTING_KEY}}
+        USER: ${{secrets.GADI_USER}}
