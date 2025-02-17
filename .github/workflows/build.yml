@@ -37,6 +37,9 @@ jobs:
     - name: Package Petsc
       run: |
         tar -cf /tmp/petsc.tar .
+    - name: Did that work?
+      run: |
+        ls -l /tmp
     - name: Sync petsc to Gadi
       uses: up9cloud/action-rsync@v1.4
       env:
