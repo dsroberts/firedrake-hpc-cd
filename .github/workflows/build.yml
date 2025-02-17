@@ -22,6 +22,8 @@ jobs:
         EOF
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        path: ${{ github.repository }}
     - name: Sync repository to Gadi
       uses: up9cloud/action-rsync@v1.4
       env:
@@ -34,16 +36,14 @@ jobs:
       with:
         repository: firedrakeproject/petsc
         ref: firedrake
+        path: petsc
     - name: Package Petsc
       run: |
-        tar -cf /tmp/petsc.tar .
-    - name: Did that work?
-      run: |
-        ls -l /tmp
+        tar -cf petsc.tar petsc
     - name: Sync petsc to Gadi
       uses: up9cloud/action-rsync@v1.4
       env:
-        SOURCE: /tmp/petsc.tar
+        SOURCE: petsc.tar
         HOST: gadi.nci.org.au
         TARGET: ${{secrets.GADI_REPO_PATH}}
         KEY: ${{secrets.GADI_TESTING_KEY}}
