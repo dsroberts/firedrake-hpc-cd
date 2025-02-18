@@ -24,16 +24,12 @@ on:
         type: string
 
 jobs:
-  setup_build:
-    uses: ./.github/workflows/prepare_and_transfer_repo.yml
-    with:
-      system: ${{ inputs.system }}
-    secrets: inherit
-  
-  setup_petsc:
-    needs: setup_build
+  build:
     runs-on: ubuntu-latest
     steps:
+    - uses: ./.github/workflows/prepare_and_transfer_repo.yml
+      with:
+        system: ${{ inputs.system }}
     - name: Set petsc build type
       if: ${{ inputs.do_64bit }}
       run: echo "QSUB_FLAG_64BIT=,DO_64BIT=1" >> $GITHUB_ENV
