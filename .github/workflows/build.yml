@@ -4,11 +4,15 @@ on:
   workflow_dispatch:
     inputs:
       do_64bit:
-        description: "Whether to build petsc/firedrake with 64-bit indices"
+        description: "Build petsc/firedrake with 64-bit indices?"
         required: false
         type: boolean
       build_branch:
-        description: "Select a firedrake branch to build"
+        description: "Select a firedrake branch to build (blank for master)"
+        required: false
+        type: string
+      firedrake_repo:
+        description: "Select a firedrake repository to build (blank for firedrakeproject/firedrake)"
         required: false
         type: string
 
@@ -55,5 +59,5 @@ jobs:
       run: echo "QSUB_FLAG_64BIT=-v DO_64BIT=1" >> $GITHUB_ENV
     - name: Build petsc
       run: |
-        ssh gadi "cd ${{secrets.GADI_REPO_PATH}}/scripts; qsub -P fp50 -Wblock=true -lncpus=12,mem=48GB,walltime=2:00:00,jobfs=100GB,storage=gdata/xd2+scratch/xd2+gdata/fp50+scratch/fp50,ood=jupyterlab -vREPO_PATH=${{secrets.GADI_REPO_PATH}} "$QSUB_FLAG_64BIT" build-petsc.sh"
+        ssh gadi "cd ${{secrets.GADI_REPO_PATH}}/scripts; qsub -P fp50 -Wblock=true -lncpus=12,mem=48GB,walltime=2:00:00,jobfs=100GB,storage=gdata/xd2+scratch/xd2+gdata/fp50+scratch/fp50,ood=jupyterlab -vREPO_PATH=${{secrets.GADI_REPO_PATH}}"$QSUB_FLAG_64BIT" build-petsc.sh"
  
