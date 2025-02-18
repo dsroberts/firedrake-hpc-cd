@@ -27,7 +27,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: ./.github/workflows/prepare_and_transfer_repo.yml
+    - uses: ./.github/actions/prepare_and_transfer_repo
       with:
         system: ${{ inputs.system }}
     - name: Set petsc build type
