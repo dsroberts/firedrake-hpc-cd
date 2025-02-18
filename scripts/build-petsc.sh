@@ -13,8 +13,12 @@ set -e
 ### 1.) Intialisation
 module purge
 
-this_script=$(realpath $0)
-here="${this_script%/*}"
+if [[ ${REPO_PATH }]]; then
+    here="${REPO_PATH}/scripts"
+else
+    this_script=$(realpath $0)
+    here="${this_script%/*}"
+fi
 export APP_NAME="petsc"
 source "${here}/identify-system.sh"
 
