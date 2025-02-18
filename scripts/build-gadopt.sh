@@ -14,6 +14,7 @@ module purge
 
 if [[ ${REPO_PATH} ]]; then
     here="${REPO_PATH}/scripts"
+    this_script="${here}/${0##*/}"
 else
     this_script=$(realpath $0)
     here="${this_script%/*}"
