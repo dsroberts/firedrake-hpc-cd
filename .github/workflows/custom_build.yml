@@ -1,4 +1,4 @@
-name: Build Custom PETSc & Firedrake
+name: Build PETSc & Firedrake
 
 on:
   workflow_dispatch:
@@ -15,7 +15,7 @@ on:
         required: false
         type: boolean
       build_branch:
-        description: "Select a firedrake branch to build (blank for master)"
+        description: "Select a firedrake branch to build"
         required: true
         type: string
       firedrake_repo:
@@ -54,7 +54,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: ${{ env.FIREDRAKE_REPO }}
-        ref: ${{ inputs.build_branch || 'master'}}
+        ref: ${{ inputs.build_branch }}
         path: firedrake
         fetch-tags: true
     - name: Package Petsc
