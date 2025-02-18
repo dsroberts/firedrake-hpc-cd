@@ -45,15 +45,11 @@ jobs:
         hostkey: ${{ secrets[env.hkey_var] }}
         user: ${{ secrets[env.user_var] }}
         repopath: ${{ secrets[env.repo_path_var] }}
-    - name: Set petsc build type
-      if: ${{ inputs.do_64bit }}
-      run: echo "QSUB_FLAG_64BIT=,DO_64BIT=1" >> $GITHUB_ENV
-    - name: Select firedrake repo
-      run: echo FIREDRAKE_REPO=${{ inputs.firedrake_repo || 'firedrakeproject/firedrake' }} >> $GITHUB_ENV
-    - name: Select firedrake branch
-      if: ${{ inputs.build_branch }}
-      run: echo QSUB_FLAG_BRANCH=${{ format(',BUILD_BRANCH={0}',  inputs.build_branch ) }} >> $GITHUB_ENV
-
+    - uses: ./.github/actions/set_build_vars
+      with:
+        do_64bit: ${{ inputs.do_64bit }}
+        firedrake_repo: ${{ inputs.firedrake_repo }}
+        build_branch: ${{ inputs.build_branch }}
     - name: Checkout PETSc
       uses: actions/checkout@v4
       with:
