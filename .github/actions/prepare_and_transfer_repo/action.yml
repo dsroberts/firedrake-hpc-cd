@@ -2,30 +2,31 @@ name: Prepare and transfer repository
 inputs:
   system:
     required: true
+  sshkey:
+    required: true
+  hostkey:
+    required: true
+  user:
+    required: true
+  repopath:
+    required: true
 
 runs:
   using: "composite"
   steps: 
-  - name: Get system-specific variable names
-    shell: bash
-    run: |
-      tmp=${{ inputs.system }}
-      echo key_var=${tmp^^}_TESTING_KEY >> $GITHUB_ENV
-      echo hkey_var=${tmp^^}_HOST_KEY >> $GITHUB_ENV
-      echo user_var=${tmp^^}_USER >> $GITHUB_ENV
-      echo repo_path_var=${tmp^^}_REPO_PATH >> $GITHUB_ENV
+
   - name: Configure SSH
     shell: bash
     run: |
       mkdir -p ~/.ssh/
-      echo "${{ secrets[env.key_var] }}" > ~/.ssh/${{inputs.system}}.key
+      echo "${{inputs.sshkey}}" > ~/.ssh/${{inputs.system}}.key
       chmod 600 ~/.ssh/${{inputs.system}}.key
-      echo "${{ secrets[env.hkey_var] }}" >> ~/.ssh/known_hosts
+      echo "${{inputs.hostkey}}" >> ~/.ssh/known_hosts
       chmod 600 ~/.ssh/known_hosts
       cat > ~/.ssh/config <<EOF
       Host ${{inputs.system}}
         Hostname ${{inputs.system}}.nci.org.au
-        User ${{ secrets[env.user_var] }}
+        User ${{inputs.user}}
         IdentityFile ~/.ssh/${{inputs.system}}.key
       EOF
   - name: Scrape build settings
@@ -36,4 +37,4 @@ runs:
   - name: Sync repository to ${{inputs.system}}
     shell: bash
     run: |
-      rsync -avz --delete --exclude=/.git/ --exclude=/.github/ ./ ${{inputs.system}}:${{ secrets[env.repo_path_var] }}
+      rsync -avz --delete --exclude=/.git/ --exclude=/.github/ ./ ${{inputs.system}}:${{inputs.repopath}}

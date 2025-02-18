@@ -27,11 +27,24 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+    ### N.B this step cannot be placed in a composite action
+    ### due to secrets access
+    - name: Get system-specific variable names
+      run: |
+        tmp=${{ inputs.system }}
+        echo key_var=${tmp^^}_TESTING_KEY >> $GITHUB_ENV
+        echo hkey_var=${tmp^^}_HOST_KEY >> $GITHUB_ENV
+        echo user_var=${tmp^^}_USER >> $GITHUB_ENV
+        echo repo_path_var=${tmp^^}_REPO_PATH >> $GITHUB_ENV
     - name: Checkout repository
       uses: actions/checkout@v4
     - uses: ./.github/actions/prepare_and_transfer_repo
       with:
         system: ${{ inputs.system }}
+        sshkey: ${{ secrets[env.key_var] }}
+        hostkey: ${{ secrets[env.hkey_var] }}
+        user: ${{ secrets[env.user_var] }}
+        repopath: ${{ secrets[env.repo_path_var] }}
     - name: Set petsc build type
       if: ${{ inputs.do_64bit }}
       run: echo "QSUB_FLAG_64BIT=,DO_64BIT=1" >> $GITHUB_ENV
