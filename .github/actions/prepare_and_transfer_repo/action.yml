@@ -7,6 +7,7 @@ runs:
   using: "composite"
   steps: 
   - name: Get system-specific variable names
+    shell: bash
     run: |
       tmp=${{ inputs.system }}
       echo key_var=${tmp^^}_TESTING_KEY >> $GITHUB_ENV
@@ -14,6 +15,7 @@ runs:
       echo user_var=${tmp^^}_USER >> $GITHUB_ENV
       echo repo_path_var=${tmp^^}_REPO_PATH >> $GITHUB_ENV
   - name: Configure SSH
+    shell: bash
     run: |
       mkdir -p ~/.ssh/
       echo "${{ secrets[env.key_var] }}" > ~/.ssh/${{inputs.system}}.key
@@ -27,9 +29,11 @@ runs:
         IdentityFile ~/.ssh/${{inputs.system}}.key
       EOF
   - name: Scrape build settings
+    shell: bash
     run: |
       source scripts/${{inputs.system}}/build-config.sh
       echo BUILD_STAGE_DIR=$BUILD_STAGE_DIR >> $GITHUB_ENV
   - name: Sync repository to ${{inputs.system}}
+    shell: bash
     run: |
       rsync -avz --delete --exclude=/.git/ --exclude=/.github/ ./ ${{inputs.system}}:${{ secrets[env.repo_path_var] }}

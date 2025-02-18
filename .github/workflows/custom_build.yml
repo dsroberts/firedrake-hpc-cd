@@ -19,7 +19,7 @@ on:
         required: true
         type: string
       firedrake_repo:
-        description: "Select a firedrake repository to build (blank for firedrakeproject/firedrake)"
+        description: "Select a firedrake repository to build (leave blank for firedrakeproject/firedrake)"
         required: false
         type: string
 
