@@ -58,8 +58,8 @@ export PY_VERSION="${py_ver%.*}"
 
 [[ "${PBS_JOBFS}" ]] && export EXTRACT_DIR="${PBS_JOBFS}" || export EXTRACT_DIR="${TMPDIR}"
 export BUILD_NCPUS="${PBS_NCPUS}"
-export APPS_PREFIX=/scratch/fp50/dr4292/apps
-export MODULE_PREFIX=/scratch/fp50/dr4292/modules
+export APPS_PREFIX=/g/data/fp50/admin/testing/apps
+export MODULE_PREFIX=/g/data/fp50/admin/testing/modules
 export SQUASHFS_PATH="${EXTRACT_DIR}/squashfs-root/opt"
 export OVERLAY_BASE="${EXTRACT_DIR}/overlay"
 ### N.B. CONTAINER_PATH is set by petsc module, so we need a different
