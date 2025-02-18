@@ -13,7 +13,7 @@ set -e
 ### 1.) Intialisation
 module purge
 
-if [[ ${REPO_PATH }]]; then
+if [[ ${REPO_PATH} ]]; then
     here="${REPO_PATH}/scripts"
 else
     this_script=$(realpath $0)
