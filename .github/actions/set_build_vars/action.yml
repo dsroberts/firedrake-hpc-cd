@@ -12,7 +12,7 @@ runs:
   steps: 
   - name: Set petsc build type
     shell: bash
-    if: ${{ inputs.do_64bit }}
+    if: ${{ inputs.do_64bit == 'true' }}
     run: echo "QSUB_FLAG_64BIT=,DO_64BIT=1" >> $GITHUB_ENV
   - name: Select firedrake repo
     shell: bash
