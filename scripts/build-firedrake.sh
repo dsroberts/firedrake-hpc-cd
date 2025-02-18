@@ -12,8 +12,14 @@ set -e
 ###
 ### 1.) Intialisation
 module purge
-this_script=$(realpath $0)
-here="${this_script%/*}"
+
+if [[ ${REPO_PATH} ]]; then
+    here="${REPO_PATH}/scripts"
+    this_script="${here}/build-firedrake.sh"
+else
+    this_script=$(realpath $0)
+    here="${this_script%/*}"
+fi
 export APP_NAME="firedrake"
 source "${here}/identify-system.sh"
 

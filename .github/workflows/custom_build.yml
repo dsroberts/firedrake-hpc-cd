@@ -1,0 +1,74 @@
+name: Build PETSc & Firedrake
+
+on:
+  workflow_dispatch:
+    inputs:
+      system:
+        description: "Select a system to build on"
+        required: true
+        type: choice
+        options:
+          - gadi
+          - setonix
+      do_64bit:
+        description: "Build petsc/firedrake with 64-bit indices?"
+        required: false
+        type: boolean
+      build_branch:
+        description: "Select a firedrake branch to build"
+        required: true
+        type: string
+      firedrake_repo:
+        description: "Select a firedrake repository to build (blank for firedrakeproject/firedrake)"
+        required: false
+        type: string
+
+jobs:
+  setup_build:
+    uses: ./.github/workflows/prepare_and_transfer_repo.yml
+    with:
+      system: ${{ inputs.system }}
+    secrets: inherit
+  
+  setup_petsc:
+    needs: setup_build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set petsc build type
+      if: ${{ inputs.do_64bit }}
+      run: echo "QSUB_FLAG_64BIT=,DO_64BIT=1" >> $GITHUB_ENV
+    - name: Select firedrake repo
+      run: echo FIREDRAKE_REPO=${{ inputs.firedrake_repo || 'firedrakeproject/firedrake' }} >> $GITHUB_ENV
+    - name: Select firedrake branch
+      if: ${{ inputs.build_branch }}
+      run: echo QSUB_FLAG_BRANCH=${{ format(',BUILD_BRANCH={0}',  inputs.build_branch ) }} >> $GITHUB_ENV
+
+    - name: Checkout PETSc
+      uses: actions/checkout@v4
+      with:
+        repository: firedrakeproject/petsc
+        ref: firedrake
+        path: petsc
+        fetch-tags: true
+    - name: Checkout Firedrake
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ env.FIREDRAKE_REPO }}
+        ref: ${{ inputs.build_branch }}
+        path: firedrake
+        fetch-tags: true
+    - name: Package Petsc
+      run: |
+        tar -cf petsc.tar petsc
+    - name: Package Firedrake
+      run: |
+        tar -cf firedrake.tar firedrake
+    - name: Sync petsc and firedrake to ${{inputs.system}}
+      run: |
+        scp firedrake.tar petsc.tar ${{inputs.system}}:$BUILD_STAGE_DIR/
+    - name: Build petsc
+      run: |
+        ssh ${{inputs.system}} "cd ${{ secrets[env.repo_path_var] }}/scripts; qsub -P fp50 -Wblock=true -lncpus=12,mem=48GB,walltime=2:00:00,jobfs=100GB,storage=gdata/xd2+scratch/xd2+gdata/fp50+scratch/fp50,ood=jupyterlab -v REPO_PATH=${{ secrets[env.repo_path_var] }}"$QSUB_FLAG_64BIT" build-petsc.sh"
+    - name: Build firedrake
+      run: |
+        ssh ${{inputs.system}} "cd ${{ secrets[env.repo_path_var] }}/scripts; qsub -P fp50 -Wblock=true -lncpus=1,mem=16GB,walltime=1:00:00,jobfs=100GB,storage=gdata/xd2+scratch/xd2+gdata/fp50+scratch/fp50 -q copyq -v REPO_PATH=${{ secrets[env.repo_path_var] }}"$QSUB_FLAG_64BIT$QSUB_FLAG_BRANCH" build-firedrake.sh"
