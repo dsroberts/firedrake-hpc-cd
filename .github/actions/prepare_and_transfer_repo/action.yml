@@ -1,39 +1,35 @@
 name: Prepare and transfer repository
-on:
-  workflow_call:
-    inputs:
-      system:
-        required: true
-        type: string
+inputs:
+  system:
+    required: true
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps: 
-    - name: Get system-specific variable names
-      run: |
-        tmp=${{ inputs.system }}
-        echo key_var=${tmp^^}_TESTING_KEY >> $GITHUB_ENV
-        echo hkey_var=${tmp^^}_HOST_KEY >> $GITHUB_ENV
-        echo user_var=${tmp^^}_USER >> $GITHUB_ENV
-        echo repo_path_var=${tmp^^}_REPO_PATH >> $GITHUB_ENV
-    - name: Configure SSH
-      run: |
-        mkdir -p ~/.ssh/
-        echo "${{ secrets[env.key_var] }}" > ~/.ssh/${{inputs.system}}.key
-        chmod 600 ~/.ssh/${{inputs.system}}.key
-        echo "${{ secrets[env.hkey_var] }}" >> ~/.ssh/known_hosts
-        chmod 600 ~/.ssh/known_hosts
-        cat > ~/.ssh/config <<EOF
-        Host ${{inputs.system}}
-          Hostname ${{inputs.system}}.nci.org.au
-          User ${{ secrets[env.user_var] }}
-          IdentityFile ~/.ssh/${{inputs.system}}.key
-        EOF
-    - name: Scrape build settings
-      run: |
-        source scripts/${{inputs.system}}/build-config.sh
-        echo BUILD_STAGE_DIR=$BUILD_STAGE_DIR >> $GITHUB_ENV
-    - name: Sync repository to ${{inputs.system}}
-      run: |
-        rsync -avz --delete --exclude=/.git/ --exclude=/.github/ ./ ${{inputs.system}}:${{ secrets[env.repo_path_var] }}
+runs:
+  using: "composite"
+  steps: 
+  - name: Get system-specific variable names
+    run: |
+      tmp=${{ inputs.system }}
+      echo key_var=${tmp^^}_TESTING_KEY >> $GITHUB_ENV
+      echo hkey_var=${tmp^^}_HOST_KEY >> $GITHUB_ENV
+      echo user_var=${tmp^^}_USER >> $GITHUB_ENV
+      echo repo_path_var=${tmp^^}_REPO_PATH >> $GITHUB_ENV
+  - name: Configure SSH
+    run: |
+      mkdir -p ~/.ssh/
+      echo "${{ secrets[env.key_var] }}" > ~/.ssh/${{inputs.system}}.key
+      chmod 600 ~/.ssh/${{inputs.system}}.key
+      echo "${{ secrets[env.hkey_var] }}" >> ~/.ssh/known_hosts
+      chmod 600 ~/.ssh/known_hosts
+      cat > ~/.ssh/config <<EOF
+      Host ${{inputs.system}}
+        Hostname ${{inputs.system}}.nci.org.au
+        User ${{ secrets[env.user_var] }}
+        IdentityFile ~/.ssh/${{inputs.system}}.key
+      EOF
+  - name: Scrape build settings
+    run: |
+      source scripts/${{inputs.system}}/build-config.sh
+      echo BUILD_STAGE_DIR=$BUILD_STAGE_DIR >> $GITHUB_ENV
+  - name: Sync repository to ${{inputs.system}}
+    run: |
+      rsync -avz --delete --exclude=/.git/ --exclude=/.github/ ./ ${{inputs.system}}:${{ secrets[env.repo_path_var] }}
