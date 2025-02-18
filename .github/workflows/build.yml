@@ -59,7 +59,7 @@ jobs:
     - name: Checkout Firedrake
       uses: actions/checkout@v4
       with:
-        repository: $FIREDRAKE_REPO
+        repository: ${{ env.FIREDRAKE_REPO }}
         ref: ${{ inputs.build_branch || 'master'}}
         path: firedrake
     - name: Package Petsc
