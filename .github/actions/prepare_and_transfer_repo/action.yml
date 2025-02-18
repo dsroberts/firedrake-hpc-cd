@@ -30,8 +30,6 @@ jobs:
           User ${{ secrets[env.user_var] }}
           IdentityFile ~/.ssh/${{inputs.system}}.key
         EOF
-    - name: Checkout repository
-      uses: actions/checkout@v4
     - name: Scrape build settings
       run: |
         source scripts/${{inputs.system}}/build-config.sh
