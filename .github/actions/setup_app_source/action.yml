@@ -27,6 +27,3 @@ runs:
     shell: bash
     run: |
       scp ${{ inputs.app }}.tar ${{inputs.system}}:$BUILD_STAGE_DIR/
-  - name: Huh?
-    shell: bash
-    run: find .github

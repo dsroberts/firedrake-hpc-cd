@@ -60,7 +60,7 @@ jobs:
         repo: firedrakeproject/petsc
         branch: firedrake
     - name: Setup Firedrake source
-      uses: ./github/actions/setup_app_source
+      uses: ./.github/actions/setup_app_source
       with:
         system: ${{ inputs.system }}
         app: firedrake
