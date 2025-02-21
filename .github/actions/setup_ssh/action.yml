@@ -16,8 +16,8 @@ runs:
       id: get_fqdn
       shell: bash
       run: | 
-        fqdn=$( grep ${{input.system}} .github/systems.txt )
-        echo "fqdn=${fqdn//${{input.system}}:/} >> $GITHUB_OUTPUT
+        fqdn=$( grep ${{inputs.system}}: .github/systems.txt )
+        echo "fqdn=${fqdn//${{inputs.system}}:/} >> $GITHUB_OUTPUT
     - name: Configure SSH
       shell: bash
       run: |
