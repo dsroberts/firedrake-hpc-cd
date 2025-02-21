@@ -20,6 +20,7 @@ runs:
     - name: Configure SSH
       shell: bash
       run: |
+        echo ${{ steps.get_fqdn.outputs.systems }} 
         mkdir -p ~/.ssh/
         echo "${{inputs.sshkey}}" > ~/.ssh/${{inputs.system}}.key
         chmod 600 ~/.ssh/${{inputs.system}}.key
