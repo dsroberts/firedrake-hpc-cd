@@ -38,13 +38,17 @@ jobs:
           echo repo_path_var=${tmp^^}_REPO_PATH >> $GITHUB_ENV
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Setup ssh and transfer ${{ github.event.repository.name }} repo
-        uses: ./.github/actions/prepare_and_transfer_repo
+      - name: Setup ssh
+        uses: ./.github/actions/setup_ssh
         with:
           system: ${{ inputs.system }}
           sshkey: ${{ secrets[env.key_var] }}
           hostkey: ${{ secrets[env.hkey_var] }}
           user: ${{ secrets[env.user_var] }}
+      - name: Transfer ${{ github.event.repository.name }} repo
+        uses: ./.github/actions/prepare_and_transfer_repo
+        with:
+          system: ${{ inputs.system }}
           repopath: ${{ secrets[env.repo_path_var] }}
       - name: Set build variables
         uses: ./.github/actions/set_build_vars
@@ -52,13 +56,6 @@ jobs:
           do_64bit: ${{ inputs.do_64bit }}
           firedrake_repo: ${{ inputs.firedrake_repo }}
           build_branch: ${{ inputs.build_branch }}
-      - name: Setup PETSc source
-        uses: ./.github/actions/setup_app_source
-        with:
-          system: ${{ inputs.system }}
-          app: petsc
-          repo: firedrakeproject/petsc
-          branch: firedrake
       - name: Setup Firedrake source
         uses: ./.github/actions/setup_app_source
         with:
@@ -66,9 +63,13 @@ jobs:
           app: firedrake
           repo: ${{ env.FIREDRAKE_REPO }}
           branch: ${{ inputs.build_branch }}
-      - name: Build petsc
-        run: |
-          ssh ${{inputs.system}} "cd ${{ secrets[env.repo_path_var] }}/scripts; qsub -P fp50 -Wblock=true -lncpus=12,mem=48GB,walltime=2:00:00,jobfs=100GB,storage=gdata/xd2+scratch/xd2+gdata/fp50+scratch/fp50,ood=jupyterlab -v REPO_PATH=${{ secrets[env.repo_path_var] }}"$QSUB_FLAG_64BIT" build-petsc.sh"
+      - name: Set build command
+        env:
+          REPO_PATH: ${{ secrets[env.repo_path_var] }}
+        run: | 
+          ./.github/scripts/build_submit_command.sh ${{ inputs.system }} firedrake >> $GITHUB_ENV
+          echo "Firedrake job submission command:"
+          echo "${FIREDRAKE_SUBMIT_COMMAND}"
       - name: Build firedrake
         run: |
-          ssh ${{inputs.system}} "cd ${{ secrets[env.repo_path_var] }}/scripts; qsub -P fp50 -Wblock=true -lncpus=1,mem=16GB,walltime=1:00:00,jobfs=100GB,storage=gdata/xd2+scratch/xd2+gdata/fp50+scratch/fp50 -q copyq -v REPO_PATH=${{ secrets[env.repo_path_var] }}"$QSUB_FLAG_64BIT$QSUB_FLAG_BRANCH" build-firedrake.sh"
+          ssh ${{inputs.system}} "cd ${{ secrets[env.repo_path_var] }}/scripts; ${FIREDRAKE_SUBMIT_COMMAND}"

@@ -2,32 +2,12 @@ name: Prepare and transfer repository
 inputs:
   system:
     required: true
-  sshkey:
-    required: true
-  hostkey:
-    required: true
-  user:
-    required: true
   repopath:
     required: true
 
 runs:
   using: "composite"
   steps:
-    - name: Configure SSH
-      shell: bash
-      run: |
-        mkdir -p ~/.ssh/
-        echo "${{inputs.sshkey}}" > ~/.ssh/${{inputs.system}}.key
-        chmod 600 ~/.ssh/${{inputs.system}}.key
-        echo "${{inputs.hostkey}}" >> ~/.ssh/known_hosts
-        chmod 600 ~/.ssh/known_hosts
-        cat > ~/.ssh/config <<EOF
-        Host ${{inputs.system}}
-          Hostname ${{inputs.system}}.nci.org.au
-          User ${{inputs.user}}
-          IdentityFile ~/.ssh/${{inputs.system}}.key
-        EOF
     - name: Scrape build settings
       shell: bash
       run: |
