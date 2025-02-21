@@ -1,4 +1,4 @@
-name: Build PETSc & Firedrake
+name: Custom Firedrake Build
 
 on:
   workflow_dispatch:
@@ -68,8 +68,6 @@ jobs:
           REPO_PATH: ${{ secrets[env.repo_path_var] }}
         run: | 
           ./.github/scripts/build_submit_command.sh ${{ inputs.system }} firedrake >> $GITHUB_ENV
-          echo "Firedrake job submission command:"
-          echo "${FIREDRAKE_SUBMIT_COMMAND}"
       - name: Build firedrake
         run: |
           ssh ${{inputs.system}} "cd ${{ secrets[env.repo_path_var] }}/scripts; ${FIREDRAKE_SUBMIT_COMMAND}"

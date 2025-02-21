@@ -12,6 +12,11 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Get system FQDN
+      id: get_fqdn
+      shell: bash
+      run: | 
+        echo "systems=$( cat .github/systems.json )" >> $GITHUB_OUTPUT
     - name: Configure SSH
       shell: bash
       run: |
@@ -22,7 +27,7 @@ runs:
         chmod 600 ~/.ssh/known_hosts
         cat > ~/.ssh/config <<EOF
         Host ${{inputs.system}}
-          Hostname ${{inputs.system}}.nci.org.au
+          Hostname ${{ fromJson( steps.get_fqdn.outputs.systems ) }}.${{ inputs.system }}
           User ${{inputs.user}}
           IdentityFile ~/.ssh/${{inputs.system}}.key
         EOF
