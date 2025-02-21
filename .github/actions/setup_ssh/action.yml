@@ -16,7 +16,8 @@ runs:
       id: get_fqdn
       shell: bash
       run: | 
-        echo "systems=$( cat .github/systems.json )" >> $GITHUB_OUTPUT
+        fqdn=$( grep ${{input.system}} .github/systems.txt )
+        echo "fqdn=${fqdn//${{input.system}}:/} >> $GITHUB_OUTPUT
     - name: Configure SSH
       shell: bash
       run: |
@@ -28,7 +29,7 @@ runs:
         chmod 600 ~/.ssh/known_hosts
         cat > ~/.ssh/config <<EOF
         Host ${{inputs.system}}
-          Hostname ${{ fromJson(steps.get_fqdn.outputs.systems) }}
+          Hostname ${{ steps.get_fqdn.outputs.fqdn }}
           User ${{inputs.user}}
           IdentityFile ~/.ssh/${{inputs.system}}.key
         EOF
