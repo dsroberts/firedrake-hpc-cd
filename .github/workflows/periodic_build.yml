@@ -56,6 +56,7 @@ jobs:
           repo: g-adopt/g-adopt
           branch: master
           depth: 0
+          fetch_latest_tag: true
 
   build:
     needs: prepare

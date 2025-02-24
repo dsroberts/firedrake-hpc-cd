@@ -10,6 +10,8 @@ inputs:
     required: true
   depth:
     required: false
+  fetch_latest_tag:
+    required: false
 
 runs:
   using: "composite"
@@ -27,8 +29,13 @@ runs:
         ref: ${{ inputs.branch }}
         path: ${{ inputs.app }}
         fetch-tags: true
-        fetch-depth: ${{ inputs.depth || 1}}
-        lfs: true
+        fetch-depth: ${{ inputs.depth || 1 }}
+    - name: Checkout latest tag
+      if: ${{ inputs.fetch_latest_tag == 'true '}}
+      run: |
+        pushd ${{ inputs.app }}
+        git checkout $( git describe --tags --abbrev=0 )
+        popd
     - name: Package ${{ inputs.app }}
       shell: bash
       run: |

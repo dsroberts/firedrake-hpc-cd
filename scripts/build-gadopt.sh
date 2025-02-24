@@ -40,9 +40,6 @@ fi
 tar -xf "${BUILD_STAGE_DIR}/${APP_NAME}.tar"
 pushd "${APP_NAME}"
 
-### Checkout latest tag (too complicated for github actions/checkout )
-git checkout $( git describe --tags --abbrev=0 )
-
 module use "${MODULE_PREFIX}"
 module load firedrake"${APP_BUILD_TAG}"
 export APP_IN_CONTAINER_PATH="${APPS_PREFIX}/firedrake${APP_BUILD_TAG}"
