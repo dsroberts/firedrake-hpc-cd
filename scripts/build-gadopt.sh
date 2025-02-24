@@ -40,7 +40,14 @@ fi
 tar -xf "${BUILD_STAGE_DIR}/${APP_NAME}.tar"
 pushd "${APP_NAME}"
 
+for p in "${MODULE_USE_PATHS[@]}"; do
+    module use ${p}
+done
 module use "${MODULE_PREFIX}"
+
+for m in "${EXTRA_MODULES[@]}"; do
+    module load ${m}
+done
 module load firedrake"${APP_BUILD_TAG}"
 export APP_IN_CONTAINER_PATH="${APPS_PREFIX}/firedrake${APP_BUILD_TAG}"
 export MODULE_FILE="${MODULE_PREFIX}/${APP_NAME}${APP_BUILD_TAG}"
