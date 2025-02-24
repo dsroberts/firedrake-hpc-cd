@@ -40,8 +40,6 @@ fi
 tar -xf "${BUILD_STAGE_DIR}/${APP_NAME}.tar"
 pushd "${APP_NAME}"
 
-export PATH="${APPS_PREFIX}/git-lfs/bin:${PATH}"
-
 ### Checkout latest tag (too complicated for github actions/checkout )
 git checkout $( git describe --tags --abbrev=0 )
 

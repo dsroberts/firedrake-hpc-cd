@@ -27,7 +27,8 @@ runs:
         ref: ${{ inputs.branch }}
         path: ${{ inputs.app }}
         fetch-tags: true
-        fetch-depth: ${{ inputs.depth || 1 }}
+        fetch-depth: ${{ inputs.depth || 1}}
+        lfs: true
     - name: Package ${{ inputs.app }}
       shell: bash
       run: |
