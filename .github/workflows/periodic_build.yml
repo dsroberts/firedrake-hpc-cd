@@ -29,6 +29,11 @@ jobs:
           sshkey: ${{ secrets[steps.get_sys_vars.outputs.key_var] }}
           hostkey: ${{ secrets[steps.get_sys_vars.outputs.hkey_var] }}
           user: ${{ secrets[steps.get_sys_vars.outputs.user_var] }}
+      - name: Transfer ${{ github.event.repository.name }} repo
+        uses: ./.github/actions/prepare_and_transfer_repo
+        with:
+          system: ${{ matrix.system }}
+          repopath: ${{ secrets[steps.get_sys_vars.outputs.repo_path_var] }}
       - name: Setup PETSc source
         uses: ./.github/actions/setup_app_source
         with:

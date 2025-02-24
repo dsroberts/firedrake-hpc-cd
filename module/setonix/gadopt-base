@@ -1,0 +1,5 @@
+local prefix = "__APP_IN_CONTAINER_PATH__"
+
+load("firedrake__APP_BUILD_TAG__/__FIREDRAKE_TAG__")
+prepend_path("PYTHONPATH",pathJoin(prefix,"gadopt"))
+setenv("GADOPT_BASE",pathJoin(prefix,"gadopt"))
