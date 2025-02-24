@@ -36,6 +36,7 @@ runs:
       run: |
         pushd ${{ inputs.app }}
         git checkout $( git describe --tags --abbrev=0 )
+        git status
         popd
     - name: Package ${{ inputs.app }}
       shell: bash
