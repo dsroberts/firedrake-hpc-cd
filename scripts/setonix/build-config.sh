@@ -23,7 +23,7 @@ compiler_version=12.2.0
 ### Define any compiler-specific things here
 if [[ $compiler_type == "gcc" ]]; then
     ### Defer evaluation of this variables until the MKL module is loaded
-    export COMPILER_OPT_FLAGS="-O3 -g -march=native -mtune=native"
+    export COMPILER_OPT_FLAGS='-O3 -g -march=native -mtune=native'
     export VERSION_TAG="-${compiler_type}${compiler_version%%\.*}"
     export PYOP2_COMPILER_OPT_FLAGS='"-fPIC -O3 -march=native -mtune=native -ffast-math"'
 

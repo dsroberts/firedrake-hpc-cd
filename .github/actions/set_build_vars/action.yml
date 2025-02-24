@@ -1,0 +1,23 @@
+name: Prepare and transfer repository
+inputs:
+  do_64bit:
+    required: false
+  firedrake_repo:
+    required: false
+  build_branch:
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set petsc build type
+      shell: bash
+      if: ${{ inputs.do_64bit == 'true' }}
+      run: echo "QSUB_FLAG_64BIT=,DO_64BIT=1" >> $GITHUB_ENV
+    - name: Select firedrake repo
+      shell: bash
+      run: echo FIREDRAKE_REPO=${{ inputs.firedrake_repo || 'firedrakeproject/firedrake' }} >> $GITHUB_ENV
+    - name: Select firedrake branch
+      if: ${{ inputs.build_branch }}
+      shell: bash
+      run: echo QSUB_FLAG_BRANCH=${{ format(',BUILD_BRANCH={0}',  inputs.build_branch ) }} >> $GITHUB_ENV

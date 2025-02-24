@@ -22,7 +22,7 @@ mkl_version=2024.2.0
 
 ### Define any compiler-specific things here
 if [[ $compiler_type == "intel-compiler" ]]; then
-    export COMPILER_OPT_FLAGS="-O3 -g -xCASCADELAKE"
+    export COMPILER_OPT_FLAGS='-O3 -g -xCASCADELAKE'
     export VERSION_TAG="-intelclassic"
     export PYOP2_COMPILER_OPT_FLAGS='"-O3 -fPIC -xHost -fp-model=fast"'
 
@@ -32,7 +32,7 @@ if [[ $compiler_type == "intel-compiler" ]]; then
 
 elif [[ $compiler_type == "intel-compiler-llvm" ]]; then
     ### Defer evaluation of these variables until the MKL module is loaded - Double quotes must be escaped
-    export COMPILER_OPT_FLAGS="-O3 -g -xCASCADELAKE"
+    export COMPILER_OPT_FLAGS='-O3 -g -xCASCADELAKE'
     export VERSION_TAG=""
     export PYOP2_COMPILER_OPT_FLAGS='"-O3 -fPIC -xHost -fp-model=fast"'
 
@@ -42,7 +42,7 @@ elif [[ $compiler_type == "intel-compiler-llvm" ]]; then
 
 elif [[ $compiler_type == "gcc" ]]; then
     ### Defer evaluation of this variables until the MKL module is loaded
-    export COMPILER_OPT_FLAGS="-O3 -g -march=cascadelake -mtune=cascadelake"
+    export COMPILER_OPT_FLAGS='-O3 -g -march=cascadelake -mtune=cascadelake'
     export VERSION_TAG="-${compiler_type}${compiler_version%%\.*}"
     export PYOP2_COMPILER_OPT_FLAGS='"-fPIC -O3 -march=native -mtune=native -ffast-math"'
 
@@ -58,15 +58,15 @@ export PY_VERSION="${py_ver%.*}"
 
 [[ "${PBS_JOBFS}" ]] && export EXTRACT_DIR="${PBS_JOBFS}" || export EXTRACT_DIR="${TMPDIR}"
 export BUILD_NCPUS="${PBS_NCPUS}"
-export APPS_PREFIX=/g/data/fp50/apps
-export MODULE_PREFIX=/g/data/fp50/modules
+export APPS_PREFIX=/g/data/fp50/admin/testing/apps
+export MODULE_PREFIX=/g/data/fp50/admin/testing/modules
 export SQUASHFS_PATH="${EXTRACT_DIR}/squashfs-root/opt"
 export OVERLAY_BASE="${EXTRACT_DIR}/overlay"
 ### N.B. CONTAINER_PATH is set by petsc module, so we need a different
 ### variable inside the build scripts as some of them load & unload
 ### a petsc module.
 export BUILD_CONTAINER_PATH="${APPS_PREFIX}/petsc/etc"
-export BUILD_STAGE_DIR=/scratch/fp50/staging
+export BUILD_STAGE_DIR=/scratch/fp50/dr4292/staging
 export WRITERS_GROUP=xd2
 
 ### Otherwise cmake can't find MPI when building libsupermesh via. pip

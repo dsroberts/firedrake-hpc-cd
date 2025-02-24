@@ -1,0 +1,35 @@
+name: Prepare and transfer repository
+inputs:
+  system:
+    required: true
+  app:
+    required: true
+  repo:
+    required: true
+  branch:
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Scrape build settings
+      id: scrape_settings
+      shell: bash
+      run: |
+        source scripts/${{inputs.system}}/build-config.sh
+        echo build_stage_dir=$BUILD_STAGE_DIR >> $GITHUB_OUTPUT
+    - name: Checkout ${{ inputs.app }}
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.repo }}
+        ref: ${{ inputs.branch }}
+        path: ${{ inputs.app }}
+        fetch-tags: true
+    - name: Package ${{ inputs.app }}
+      shell: bash
+      run: |
+        tar -cf ${{ inputs.app }}.tar ${{ inputs.app }}
+    - name: Sync ${{ inputs.app }} to ${{inputs.system}}
+      shell: bash
+      run: |
+        scp ${{ inputs.app }}.tar ${{inputs.system}}:${{steps.scrape_settings.outputs.build_stage_dir}}/

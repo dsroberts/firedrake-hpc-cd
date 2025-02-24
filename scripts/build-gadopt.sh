@@ -5,15 +5,18 @@ set -e
 ### Yes, 'build' is a stretch, but it is in keeping with the rest
 ### of the scripts in this repo
 ###
-### Use github action to clone out g-adopt repo, check out a tag 
-### tar it up and copy to HPC system
-###
-### ==== SECTIONS =====
+### Use github action to clone out g-adopt repo, tar it up and
+### copy to HPC system
 ###
 module purge
 
-this_script=$(realpath $0)
-here="${this_script%/*}"
+if [[ ${REPO_PATH} ]]; then
+    here="${REPO_PATH}/scripts"
+    this_script="${here}/build-gadopt.sh"
+else
+    this_script=$(realpath $0)
+    here="${this_script%/*}"
+fi
 export APP_NAME="g-adopt"
 source "${here}/identify-system.sh"
 
@@ -24,15 +27,14 @@ source "${here}/functions.sh"
 [[ -e "${here}/${FD_SYSTEM}/functions.sh" ]] && source "${here}/${FD_SYSTEM}/functions.sh"
 
 cd "${EXTRACT_DIR}"
-if [[ ! -d "${EXTRACT_DIR}/${APP_NAME}" ]]; then
-    tar -xf "${BUILD_STAGE_DIR}/${APP_NAME}.tar"
+if [[ -d "${EXTRACT_DIR}/${APP_NAME}" ]]; then
+    rm -rf "${EXTRACT_DIR}/${APP_NAME}"
 fi
+tar -xf "${BUILD_STAGE_DIR}/${APP_NAME}.tar"
 pushd "${APP_NAME}"
-cd "${EXTRACT_DIR}"
-if [[ ! -d "${EXTRACT_DIR}/${APP_NAME}" ]]; then
-    tar -xf "${BUILD_STAGE_DIR}/${APP_NAME}.tar"
-fi
-cd
+
+### Checkout latest tag (too complicated for github actions/checkout )
+git checkout $( git describe --tags --abbrev=0 )
 
 module use "${MODULE_PREFIX}"
 module load firedrake"${APP_BUILD_TAG}"
