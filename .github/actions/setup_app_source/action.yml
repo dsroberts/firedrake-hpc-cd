@@ -31,7 +31,7 @@ runs:
         fetch-tags: true
         fetch-depth: ${{ inputs.depth || 1 }}
     - name: Checkout latest tag
-      if: ${{ inputs.fetch_latest_tag == 'true '}}
+      if: ${{ inputs.fetch_latest_tag == 'true' }}
       shell: bash
       run: |
         pushd ${{ inputs.app }}
