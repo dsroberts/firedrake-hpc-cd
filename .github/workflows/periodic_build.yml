@@ -50,6 +50,7 @@ jobs:
           app: g-adopt
           repo: g-adopt/g-adopt
           branch: master
+          depth: 0
 
   build:
     needs: prepare

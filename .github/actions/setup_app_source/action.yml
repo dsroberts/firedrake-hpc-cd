@@ -8,6 +8,8 @@ inputs:
     required: true
   branch:
     required: true
+  depth:
+    required: false
 
 runs:
   using: "composite"
@@ -25,6 +27,7 @@ runs:
         ref: ${{ inputs.branch }}
         path: ${{ inputs.app }}
         fetch-tags: true
+        fetch-depth: ${{ inputs.depth || 1 }}
     - name: Package ${{ inputs.app }}
       shell: bash
       run: |
