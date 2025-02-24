@@ -30,6 +30,7 @@ runs:
         path: ${{ inputs.app }}
         fetch-tags: true
         fetch-depth: ${{ inputs.depth || 1 }}
+        lfs: true
     - name: Checkout latest tag
       if: ${{ inputs.fetch_latest_tag == 'true' }}
       shell: bash
@@ -42,7 +43,7 @@ runs:
       shell: bash
       run: |
         tar -cf ${{ inputs.app }}.tar ${{ inputs.app }}
-    - name: Sync ${{ inputs.app }} to ${{inputs.system}}
+    - name: Sync ${{ inputs.app }} to ${{ inputs.system }}
       shell: bash
       run: |
         scp ${{ inputs.app }}.tar ${{inputs.system}}:${{steps.scrape_settings.outputs.build_stage_dir}}/

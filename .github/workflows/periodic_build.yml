@@ -7,7 +7,7 @@ jobs:
   prepare:
     strategy:
       matrix:
-        system: [gadi]
+        system: [gadi, setonix]
     runs-on: ubuntu-latest
     steps:
       ### N.B this step cannot be placed in a composite action
