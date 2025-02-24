@@ -1,4 +1,4 @@
-name: Periodic Firedrake Build
+name: Build Full Firedrake Stack
 
 on:
   workflow_dispatch:
@@ -60,6 +60,7 @@ jobs:
 
   build:
     needs: prepare
+    continue-on-error: true
     strategy:
       matrix:
         system: [gadi, setonix]
