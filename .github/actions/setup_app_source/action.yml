@@ -39,6 +39,9 @@ runs:
         git checkout $( git describe --tags --abbrev=0 )
         git status
         popd
+    - name: Delete post-checkout git lfs hook
+      shell: bash
+      runs: rm -f ${{ inputs.app }}/.git/hooks/post-checkout
     - name: Package ${{ inputs.app }}
       shell: bash
       run: |
