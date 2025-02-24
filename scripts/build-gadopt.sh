@@ -30,8 +30,17 @@ cd "${EXTRACT_DIR}"
 if [[ -d "${EXTRACT_DIR}/${APP_NAME}" ]]; then
     rm -rf "${EXTRACT_DIR}/${APP_NAME}"
 fi
+
+export APP_BUILD_TAG=""
+### Add any/all build type (e.g. 64bit) tags here
+if [[ "${DO_64BIT}" ]]; then
+    export APP_BUILD_TAG=${APP_BUILD_TAG}"-64bit"
+fi
+
 tar -xf "${BUILD_STAGE_DIR}/${APP_NAME}.tar"
 pushd "${APP_NAME}"
+
+export PATH="${APPS_PREFIX}/git-lfs/bin:${PATH}"
 
 ### Checkout latest tag (too complicated for github actions/checkout )
 git checkout $( git describe --tags --abbrev=0 )
