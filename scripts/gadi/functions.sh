@@ -11,9 +11,11 @@ function __petsc_post_build_in_container_hook() {
 }
 
 function __firedrake_post_build_in_container_hook() {
-    ###    a.) Link in entire python3 build - <Firedrake specific>
+    ###    a.) Copy in python3 binary and link in entire python3 build - <Firedrake specific>
     ###    We do this as otherwise the python3 venv binary will
     ###    find itself linked to the libpython3.11.so in the OS image
+    rm "venv/bin/python${PY_VERSION}"
+    cp "${PYTHON3_BASE}/bin/python${PY_VERSION}" venv/bin
     ln -s "${PYTHON3_BASE}/lib/libpython3.so" venv/lib
     ln -s "${PYTHON3_BASE}/lib/libpython${PY_VERSION}.so" venv/lib
     ln -s "${PYTHON3_BASE}/lib/libpython${PY_VERSION}.so.1.0" venv/lib
@@ -35,7 +37,6 @@ function __firedrake_post_build_in_container_hook() {
     module unload patchelf
 
     ###    d.) Link in entire OpenMPI build - <Firedrake specific>
-    rm venv/bin/mpi{exec,cc,cxx,f90}
     module load "${MPI_MODULE}"
     for i in $(find "${OPENMPI_BASE}/" ! -type d); do
         f="${i//$OPENMPI_BASE\//}"
