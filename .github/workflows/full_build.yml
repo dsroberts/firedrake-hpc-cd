@@ -1,4 +1,4 @@
-name: Build Full Firedrake Stack
+name: Build full Firedrake stack on all systems
 
 on:
   workflow_dispatch:
