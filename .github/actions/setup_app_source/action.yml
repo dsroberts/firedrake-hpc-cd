@@ -8,6 +8,10 @@ inputs:
     required: true
   branch:
     required: true
+  depth:
+    required: false
+  fetch_latest_tag:
+    required: false
 
 runs:
   using: "composite"
@@ -25,11 +29,24 @@ runs:
         ref: ${{ inputs.branch }}
         path: ${{ inputs.app }}
         fetch-tags: true
+        fetch-depth: ${{ inputs.depth || 1 }}
+        lfs: true
+    - name: Checkout latest tag
+      if: ${{ inputs.fetch_latest_tag == 'true' }}
+      shell: bash
+      run: |
+        pushd ${{ inputs.app }}
+        git checkout $( git describe --tags --abbrev=0 )
+        git status
+        popd
+    - name: Delete post-checkout git lfs hook
+      shell: bash
+      run: rm -f ${{ inputs.app }}/.git/hooks/post-checkout
     - name: Package ${{ inputs.app }}
       shell: bash
       run: |
         tar -cf ${{ inputs.app }}.tar ${{ inputs.app }}
-    - name: Sync ${{ inputs.app }} to ${{inputs.system}}
+    - name: Sync ${{ inputs.app }} to ${{ inputs.system }}
       shell: bash
       run: |
         scp ${{ inputs.app }}.tar ${{inputs.system}}:${{steps.scrape_settings.outputs.build_stage_dir}}/

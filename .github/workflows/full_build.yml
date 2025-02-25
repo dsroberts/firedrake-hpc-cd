@@ -1,4 +1,4 @@
-name: Periodic Firedrake Build
+name: Build full Firedrake stack on all systems
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ jobs:
   prepare:
     strategy:
       matrix:
-        system: [gadi]
+        system: [gadi, setonix]
     runs-on: ubuntu-latest
     steps:
       ### N.B this step cannot be placed in a composite action
@@ -29,6 +29,11 @@ jobs:
           sshkey: ${{ secrets[steps.get_sys_vars.outputs.key_var] }}
           hostkey: ${{ secrets[steps.get_sys_vars.outputs.hkey_var] }}
           user: ${{ secrets[steps.get_sys_vars.outputs.user_var] }}
+      - name: Transfer ${{ github.event.repository.name }} repo
+        uses: ./.github/actions/prepare_and_transfer_repo
+        with:
+          system: ${{ matrix.system }}
+          repopath: ${{ secrets[steps.get_sys_vars.outputs.repo_path_var] }}
       - name: Setup PETSc source
         uses: ./.github/actions/setup_app_source
         with:
@@ -50,12 +55,15 @@ jobs:
           app: g-adopt
           repo: g-adopt/g-adopt
           branch: master
+          depth: 0
+          fetch_latest_tag: true
 
   build:
     needs: prepare
+    continue-on-error: true
     strategy:
       matrix:
-        system: [gadi]
+        system: [gadi, setonix]
         do_64bit: [false, true]
     runs-on: ubuntu-latest
     steps:

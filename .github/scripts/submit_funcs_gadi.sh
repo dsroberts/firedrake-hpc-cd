@@ -9,5 +9,5 @@ function submit_gadi_firedrake() {
 }
 
 function submit_gadi_gadopt() {
-    echo GADOPT_SUBMIT_COMMAND="./build-gadopt.sh"
+    echo GADOPT_SUBMIT_COMMAND="qsub -P fp50 -Wblock=true -lncpus=1,mem=4GB,walltime=0:15:00,jobfs=100GB,storage=gdata/xd2+scratch/xd2+gdata/fp50+scratch/fp50 -q copyq -v REPO_PATH=${REPO_PATH}${QSUB_FLAG_64BIT} build-gadopt.sh"
 }
