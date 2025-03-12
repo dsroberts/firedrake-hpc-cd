@@ -217,7 +217,7 @@ make_modulefiles
 mkdir -p "${APP_IN_CONTAINER_PATH}-scripts/${TAG}/overrides"
 cp "${here}/launcher.sh" "${APP_IN_CONTAINER_PATH}-scripts/${TAG}"
 cp "${here}/${FD_SYSTEM}/launcher_conf.sh" "${APP_IN_CONTAINER_PATH}-scripts/${TAG}"
-cp "${here}"/overrides/* "${APP_IN_CONTAINER_PATH}-scripts/${TAG}/overrides/"
+[[ -d "${here}/${FD_SYSTEM}/overrides/" ]] && cp "${here}/${FD_SYSTEM}"/overrides/* "${APP_IN_CONTAINER_PATH}-scripts/${TAG}/overrides/"
 for i in "${SQUASHFS_PATH}/${SQUASHFS_APP_DIR}"/venv/bin/*; do
     ln -s launcher.sh "${APP_IN_CONTAINER_PATH}-scripts/${TAG}/${i##*/}"
 done

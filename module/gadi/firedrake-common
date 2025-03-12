@@ -8,6 +8,7 @@ setenv VIRTUAL_ENV $prefix/$tag/venv
 
 if { [ info exists env(PBS_JOBFS) ] } {
     set tmpdir_base $::env(PBS_JOBFS)
+    setenv PYTHONPYCACHEPREFIX $tmpdir_base
 } elseif { [ info exists env(TMPDIR) ] } {
     set tmpdir_base $::env(TMPDIR)
 } else {

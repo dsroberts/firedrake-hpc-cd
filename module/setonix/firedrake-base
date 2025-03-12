@@ -20,6 +20,7 @@ local tmpdir_base = "/tmp"
 setenv("PYOP2_CACHE_DIR", pathJoin(tmpdir_base,"pyop2"))
 setenv("FIREDRAKE_TSFC_KERNEL_CACHE_DIR", pathJoin(tmpdir_base,"tsfc"))
 setenv("XDG_CACHE_HOME", pathJoin(tmpdir_base,"xdg"))
+setenv("PYTHONPYCACHEPREFIX", $tmpdir_base)
 
 local mygadopt = os.getenv("MY_GADOPT") or ""
 if ( mygadopt ~= "" ) then
