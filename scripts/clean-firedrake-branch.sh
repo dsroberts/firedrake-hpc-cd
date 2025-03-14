@@ -57,4 +57,4 @@ rm "${MINUSI}" "${BRANCH_MODULES}/${MF}"
 rm "${MINUSCAPITALI}" -r "${FDB}-scripts/${FDT}"
 
 ### Remove matching entries from .modulerc
-sed -i '\:'${MF}':d' ${BRANCH_MODULES}/${MF%/*}/.modulerc*
+sed -i '\:'"${MF}"':d' "${BRANCH_MODULES}/${MF%/*}"/.modulerc*

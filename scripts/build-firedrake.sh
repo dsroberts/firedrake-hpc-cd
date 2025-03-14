@@ -17,7 +17,7 @@ if [[ ${REPO_PATH} ]]; then
     here="${REPO_PATH}/scripts"
     this_script="${here}/build-firedrake.sh"
 else
-    this_script=$(realpath $0)
+    this_script=$(realpath "${0}")
     here="${this_script%/*}"
 fi
 export APP_NAME="firedrake"
@@ -51,7 +51,7 @@ popd
 export APP_BUILD_TAG=""
 ### Add any/all build type (e.g. 64bit) tags here
 if [[ "${DO_64BIT}" ]]; then
-    export APP_BUILD_TAG=${APP_BUILD_TAG}"-64bit"
+    export APP_BUILD_TAG="${APP_BUILD_TAG}-64bit"
 fi
 
 export APP_IN_CONTAINER_PATH="${APPS_PREFIX}/${APP_NAME}${APP_BUILD_TAG}"
@@ -59,9 +59,7 @@ export OVERLAY_EXTERNAL_PATH="${OVERLAY_BASE}/${APP_IN_CONTAINER_PATH#/*/}"
 export MODULE_FILE="${MODULE_PREFIX}/${APP_NAME}${APP_BUILD_TAG}/${TAG}${MODULE_SUFFIX}"
 export SQUASHFS_APP_DIR="${APP_NAME}${APP_BUILD_TAG}-${TAG}"
 
-for p in "${MODULE_USE_PATHS[@]}"; do
-    module use ${p}
-done
+[[ "${MODULE_USE_PATHS[@]}" ]] && module use "${MODULE_USE_PATHS[@]}"
 
 ### 3.) Load dependent modules
 ### This path might not exist inside of the container
@@ -97,7 +95,7 @@ unset VERSION_TAG
 ### If we're building from a firedrake branch, move the module file so it does not
 ### appear unless specifically asked.
 if [[ "${BUILD_BRANCH}" ]]; then
-    module_dirname=${MODULE_PREFIX##*/}
+    module_dirname="${MODULE_PREFIX##*/}"
     export MODULE_PREFIX="${MODULE_PREFIX/$module_dirname/branch_$module_dirname}"
     export MODULE_FILE="${MODULE_PREFIX}/${APP_NAME}${APP_BUILD_TAG}/${TAG}${MODULE_SUFFIX}"
 fi
@@ -106,18 +104,15 @@ fi
 function inner1() {
 
     ### i1.) Load modules & set environment
-    for m in "${EXTRA_MODULES[@]}"; do
-        module load ${m}
-    done
+    [[ "${EXTRA_MODULES[@]}" ]] && module load "${EXTRA_MODULES[@]}"
 
-    module load ${COMPILER_MODULE}
-    module load ${MPI_MODULE}
-    module load ${PY_MODULE}
+    module load "${COMPILER_MODULE}"
+    module load "${MPI_MODULE}"
+    module load "${PY_MODULE}"
 
+    declare -a EXTRA_OPTS=()
     if [[ "${DO_64BIT}" ]]; then
-        export OPTS_64BIT="--petsc-int-type int64"
-    else
-        export OPTS_64BIT=""
+        export EXTRA_OPTS+=( "--petsc-int-type int64" )
     fi
 
     export PETSC_DIR="${APPS_PREFIX}/petsc${APP_BUILD_TAG}/${PETSC_DIR_SUFFIX}"
@@ -130,12 +125,12 @@ function inner1() {
 
     export MPIRUN="${MPIRUN:-mpirun}"
     mpirun_path=$(which "${MPIRUN}")
-    export MPI_HOME=$(realpath ${mpirun_path%/*}/..)
+    export MPI_HOME=$(realpath "${mpirun_path%/*}"/..)
     unset PYTHONPATH
 
     ### i2.) Install
     cd "${APP_IN_CONTAINER_PATH}/${TAG}"
-    python${PY_VERSION} firedrake/scripts/firedrake-install --honour-petsc-dir --mpiexec=${MPIRUN} --mpihome=${MPI_HOME} --mpicc=$(which mpicc) --mpicxx=$(which mpicxx) --mpif90=$(which mpif90) --no-package-manager ${OPTS_64BIT} --venv-name venv
+    "python${PY_VERSION}" firedrake/scripts/firedrake-install --honour-petsc-dir --mpiexec="${MPIRUN}" --mpihome="${MPI_HOME}" --mpicc=$(which mpicc) --mpicxx=$(which mpicxx) --mpif90=$(which mpif90) --no-package-manager "${OPTS_64BIT[@]}" --venv-name venv
     source "${APP_IN_CONTAINER_PATH}/${TAG}/venv/bin/activate"
     pip3 install jupyterlab assess gmsh imageio jupytext openpyxl pandas pyvista[all] shapely pyroltrilinos siphash24 jupyterview xarray trame_jupyter_extension pygplates
 
@@ -173,12 +168,15 @@ bind_str=""
 for bind_dir in "${bind_dirs[@]}"; do
     [[ -d "${bind_dir}" ]] && bind_str="${bind_str}${bind_dir},"
 done
-### Remove trailing comma
-export BIND_STR="${bind_str::-1}"
 
 ### Derive first directory of absolute path outside of the container
 tmp="${APP_IN_CONTAINER_PATH:1}"
 first_dir="/${tmp%%/*}"
+
+### Mount the directory we're binding over as <dir>-push-aside
+### anything required from there can be symlinked in the
+### pre_container_launch_hook.
+export BIND_STR="${bind_str}${first_dir}:${first_dir}-push-aside"
 
 module load "${SINGULARITY_MODULE}"
 

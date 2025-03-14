@@ -4,8 +4,8 @@ function in_array() {
     ### Assumes first n-1 args are an array and final arg is the string to search for
     ### Necessary because [[ libab =~ liba ]] returns true
     declare -a allargs=( "$@" )
-    finalarg=${allargs[$(( ${#allargs[@]} - 1 ))]}
-    for (( j=0; j<$(( ${#allargs[@]} - 1 )); j++ )); do
+    finalarg="${allargs[$(( ${#allargs[@]} - 1 ))]}"
+    for (( j=0; j<$(( "${#allargs[@]}" - 1 )); j++ )); do
         [[ "${allargs[$j]}" == "${finalarg}" ]] && return 0
     done
     return 1
@@ -22,10 +22,10 @@ else
 fi
 
 wrapper_path=$( realpath "${0}" )
-wrapper_bin=${wrapper_path%/*}
+wrapper_bin="${wrapper_path%/*}"
 $debug "wrapper_bin = " "${wrapper_bin}"
 conf_file="${wrapper_bin}"/launcher_conf.sh
-$debug "conf_file = " "${conf_file}"
+$debug "conf_file = ${conf_file}"
 
 source "${conf_file}"
 
@@ -74,7 +74,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-$debug "PROG_ARGS =" "${PROG_ARGS[@]}"
+$debug "PROG_ARGS = ${PROG_ARGS[@]}"
 
 if ! [[ "${SINGULARITY_BINARY_PATH}" ]]; then
     module load "${SINGULARITY_MODULE}"
@@ -104,11 +104,11 @@ $debug "cmd_to_run = " "${cmd_to_run[@]}"
 ### somewhere else (e.g. jobfs), the one on gdata will be mounted but not used.
 if ! [[ "${CONTAINER_OVERLAY_PATH_OVERRIDE}" ]]; then
     if ! [[ :"${CONTAINER_OVERLAY_PATH}": =~ :"${FIREDRAKE_BASE}"/firedrake-"${FIREDRAKE_TAG}".sqsh: ]]; then
-        [[ -r "${FIREDRAKE_BASE}"/firedrake-"${FIREDRAKE_TAG}".sqsh ]] && export CONTAINER_OVERLAY_PATH="${FIREDRAKE_BASE}"/firedrake.sqsh:${CONTAINER_OVERLAY_PATH}
+        [[ -r "${FIREDRAKE_BASE}"/firedrake-"${FIREDRAKE_TAG}".sqsh ]] && export CONTAINER_OVERLAY_PATH="${FIREDRAKE_BASE}"/firedrake.sqsh:"${CONTAINER_OVERLAY_PATH}"
     fi
 fi
 
-$debug "CONTAINER_OVERLAY_PATH after override check = " ${CONTAINER_OVERLAY_PATH}
+$debug "CONTAINER_OVERLAY_PATH after override check = ${CONTAINER_OVERLAY_PATH}"
 
 if [[ -d /.singularity.d ]]; then
     ### Short circuit detection
@@ -126,13 +126,13 @@ fi
 
 ### Handle some functions separately.
 if [[ -e ${wrapper_bin}/overrides/"${cmd_to_run[0]##*/}".sh ]]; then
-    $debug "Running override function: " ${wrapper_bin}/overrides/"${cmd_to_run[0]##*/}".sh "${cmd_to_run[@]:1}"
+    $debug "Running override function: ${wrapper_bin}/overrides/${cmd_to_run[0]##*/}.sh ${cmd_to_run[@]:1}"
     exec ${wrapper_bin}/overrides/"${cmd_to_run[0]##*/}".sh "${cmd_to_run[@]:1}"
 fi
 
 ### Add some additional config for some functions
 if [[ -e "${wrapper_bin}"/overrides/"${cmd_to_run[0]##*/}".config.sh ]]; then
-    $debug "Loading additional configuration: " "${wrapper_bin}"/overrides/"${cmd_to_run[0]##*/}".config.sh
+    $debug "Loading additional configuration: ${wrapper_bin}/overrides/${cmd_to_run[0]##*/}.config.sh"
     . "${wrapper_bin}"/overrides/"${cmd_to_run[0]##*/}".config.sh
 fi
 
@@ -148,20 +148,20 @@ export SINGULARITYENV_PREPEND_PATH=${SINGULARITYENV_PREPEND_PATH#:*}
 
 $debug "SINGULARITYENV_PREPEND_PATH= " ${SINGULARITYENV_PREPEND_PATH}
 
-overlay_args=""
+declare -a overlay_args=()
 while IFS= read -r -d: i; do
-    overlay_args="${overlay_args}--overlay=${i} "
+    overlay_args+=( "${overlay_args}" )
 done<<<"${CONTAINER_OVERLAY_PATH%:}:"
 
-$debug "overlay_args= " ${overlay_args}
+$debug "overlay_args= " "${overlay_args[@]}"
 
 bind_str=""
 for bind_dir in "${bind_dirs[@]}"; do
     [[ -d "${bind_dir}" ]] && bind_str="${bind_str}${bind_dir},"
 done
-bind_str=${bind_str%,}
+bind_str="${bind_str%,}"
 
-$debug "binding args= " ${bind_str}
+$debug "binding args = ${bind_str}"
 
-$debug "Singularity invocation: " "$SINGULARITY_BINARY_PATH" -s exec --bind "${bind_str}" ${overlay_args} "${CONTAINER_PATH}" "${cmd_to_run[@]}"
-"$SINGULARITY_BINARY_PATH" -s exec --bind "${bind_str}" ${overlay_args} "${CONTAINER_PATH}" "${cmd_to_run[@]}"
+$debug "Singularity invocation: ${SINGULARITY_BINARY_PATH} -s exec --bind" "${bind_str[@]}" "${overlay_args} ${CONTAINER_PATH}" "${cmd_to_run[@]}"
+"${SINGULARITY_BINARY_PATH}" -s exec --bind "${bind_str}" "${overlay_args[@]}" "${CONTAINER_PATH}" "${cmd_to_run[@]}"

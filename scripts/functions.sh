@@ -63,7 +63,7 @@ function resolve_libs() {
     declare -a shobjs=()
     declare -a missing_lib_names=()
     
-    echo $extra_rpath
+    echo "${extra_rpath}"
 
     pushd "${libs_path}"
 
@@ -84,12 +84,12 @@ function resolve_libs() {
     for lib in "${sorted_missing[@]}"; do
         while IFS=: read -ra items; do 
             fn=$( find "${items[@]}" -name $lib -print -quit )
-            [[ :${extra_rpath}: =~ :${fn%/*}: ]] || extra_rpath=${fn%/*}:${extra_rpath}
-        done <<<$search_paths
+            [[ :"${extra_rpath}": =~ :"${fn%/*}": ]] || extra_rpath="${fn%/*}:${extra_rpath}"
+        done <<<"${search_paths}"
     done
 
     module_restore=$( mktemp -u XXXXXXXX )
-    module save ${module_restore}
+    module save "${module_restore}"
     module purge
     module load patchelf
 
@@ -103,8 +103,8 @@ function resolve_libs() {
     done
 
     module unload patchelf
-    module restore ${module_restore}
-    rm -f ~/.lmod.d/${module_restore} ~/.config/lmod/${module_restore} ~/.module/${module_restore}
+    module restore "${module_restore}"
+    rm -f ~/.lmod.d/"${module_restore}" ~/.config/lmod/"${module_restore}" ~/.module/"${module_restore}"
     popd
 
 }
@@ -117,7 +117,7 @@ function make_modulefiles() {
     if [[ -z "${VERSION_TAG}" && -z "${BUILD_BRANCH}" ]]; then
         if [[ "${MODULE_SUFFIX}" == .lua ]]; then
             rm -f ${MODULE_FILE%/*}/default
-            ln -sf "${TAG}" "${MODULE_FILE%/*}/default"
+            ln -sf "${TAG}.lua" "${MODULE_FILE%/*}/default"
         else
             copy_and_replace "${here}/../module/${FD_SYSTEM}/version-base" "${MODULE_FILE%/*}/.version" TAG
         fi

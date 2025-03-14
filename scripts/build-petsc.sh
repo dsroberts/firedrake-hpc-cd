@@ -47,7 +47,7 @@ popd
 export APP_BUILD_TAG=""
 ### Add any/all build type (e.g. 64bit) tags here
 if [[ "${DO_64BIT}" ]]; then
-    export APP_BUILD_TAG=${APP_BUILD_TAG}"-64bit"
+    export APP_BUILD_TAG="${APP_BUILD_TAG}-64bit"
 fi
 
 export APP_IN_CONTAINER_PATH="${APPS_PREFIX}/${APP_NAME}${APP_BUILD_TAG}"
@@ -56,29 +56,24 @@ export MODULE_FILE="${MODULE_PREFIX}/${APP_NAME}${APP_BUILD_TAG}/${TAG}${VERSION
 export SQUASHFS_APP_DIR="${APP_NAME}${APP_BUILD_TAG}-${TAG}"
 
 ### Some modules may be needed outside of the container
-for p in "${MODULE_USE_PATHS[@]}"; do
-    module use ${p}
-done
+[[ "${MODULE_USE_PATHS[@]}" ]] && module use "${MODULE_USE_PATHS[@]}"
 
 ### 3.) Load dependent modules
 ### 4.) Define 'inner' function(s)
 function inner() {
 
     ### i1.) Load modules & set environment
-    for m in "${EXTRA_MODULES[@]}"; do
-        module load ${m}
-    done
+    [[ "${EXTRA_MODULES[@]}" ]] && module load "${EXTRA_MODULES[@]}"
 
     ### No quotes - some of these may need multiple modules to work
-    module load ${COMPILER_MODULE}
-    module load ${MPI_MODULE}
-    module load ${PY_MODULE}
+    module load "${COMPILER_MODULE}"
+    module load "${MPI_MODULE}"
+    module load "${PY_MODULE}"
 
     ### i2.) Install
+    declare -a EXTRA_OPTS=()
     if [[ "${DO_64BIT}" ]]; then
-        export OPTS_64BIT="--with-64-bit-indices"
-    else
-        export OPTS_64BIT=""
+        export EXTRA_OPTS+=( "--with-64-bit-indices" )
     fi
 
     cd "${APP_IN_CONTAINER_PATH}/${TAG}"
@@ -88,7 +83,7 @@ function inner() {
         get_system_specific_petsc_flags
     fi
 
-    python${PY_VERSION} ./configure PETSC_DIR="${APP_IN_CONTAINER_PATH}/${TAG}" PETSC_ARCH=default --with-mpiexec=${MPIRUN} --with-fc=mpif90 COPTFLAGS="${COMPILER_OPT_FLAGS}" CXXOPTFLAGS="${COMPILER_OPT_FLAGS}" FOPTFLAGS="${COMPILER_OPT_FLAGS}" ${OPTS_64BIT} --download-suitesparse --with-cxx=mpicxx --with-hwloc-dir=/usr --with-zlib --download-pastix --with-cc=mpicc --download-mumps --download-hdf5 --download-hypre --download-netcdf --download-pnetcdf --download-superlu_dist --with-shared-libraries=1 --with-c2html=0 --with-fortran-bindings=0 --download-metis --download-ptscotch --with-debugging=0 --download-bison "${SYSTEM_SPECIFIC_FLAGS[@]}" --with-make-np="${BUILD_NCPUS}"
+    "python${PY_VERSION}" ./configure PETSC_DIR="${APP_IN_CONTAINER_PATH}/${TAG}" PETSC_ARCH=default --with-mpiexec="${MPIRUN}" --with-fc=mpif90 COPTFLAGS="${COMPILER_OPT_FLAGS}" CXXOPTFLAGS="${COMPILER_OPT_FLAGS}" FOPTFLAGS="${COMPILER_OPT_FLAGS}" "${EXTRA_OPTS[@]}" --download-suitesparse --with-cxx=mpicxx --with-hwloc-dir=/usr --with-zlib --download-pastix --with-cc=mpicc --download-mumps --download-hdf5 --download-hypre --download-netcdf --download-pnetcdf --download-superlu_dist --with-shared-libraries=1 --with-c2html=0 --with-fortran-bindings=0 --download-metis --download-ptscotch --with-debugging=0 --download-bison "${SYSTEM_SPECIFIC_FLAGS[@]}" --with-make-np="${BUILD_NCPUS}"
     make PETSC_DIR="${APP_IN_CONTAINER_PATH}/${TAG}" PETSC_ARCH=default all
 
     ### i3.) Installation repair
@@ -124,12 +119,15 @@ bind_str=""
 for bind_dir in "${bind_dirs[@]}"; do
     [[ -d "${bind_dir}" ]] && bind_str="${bind_str}${bind_dir},"
 done
-### Remove trailing comma
-export BIND_STR="${bind_str::-1}"
 
 ### Derive first directory of absolute path outside of the container
 tmp="${APP_IN_CONTAINER_PATH:1}"
 first_dir="/${tmp%%/*}"
+
+### Mount the directory we're binding over as <dir>-push-aside
+### anything required from there can be symlinked in the
+### pre_container_launch_hook.
+export BIND_STR="${bind_str}${first_dir}:${first_dir}-push-aside"
 
 module load "${SINGULARITY_MODULE}"
 
