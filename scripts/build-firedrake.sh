@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -e
 ### Recommended PBS job
-### qsub -I -lncpus=1,mem=16GB,walltime=1:00:00,jobfs=100GB,storage=gdata/xd2+scratch/xd2+gdata/fp50+scratch/fp50 -q copyq
+### qsub -Wblock=true -lncpus=1,mem=16GB,walltime=1:00:00,jobfs=100GB,storage=gdata/xd2+scratch/xd2+gdata/fp50+scratch/fp50 -q copyq
 ### Recommended SLURM job
-### salloc -p copy -n 1 -N 1 -c 1 -t 1:00:00 --mem 16G
+### sbatch -p copy -n 1 -N 1 -c 1 -t 1:00:00 --mem 16G --wait
 ###
 ### Use github action to checkout out firedrake repo, tar it up and
 ### copy to HPC system
@@ -110,18 +110,31 @@ function inner1() {
     module load "${MPI_MODULE}"
     module load "${PY_MODULE}"
 
+<<<<<<< HEAD
     declare -a EXTRA_OPTS=()
     if [[ "${DO_64BIT}" ]]; then
         export EXTRA_OPTS+=( "--petsc-int-type int64" )
     fi
+=======
+    ### ?
+    #if [[ "${DO_64BIT}" ]]; then
+    #    export OPTS_64BIT="--petsc-int-type int64"
+    #else
+    #    export OPTS_64BIT=""
+    #fi
+>>>>>>> firedrake_pip_install
 
     export PETSC_DIR="${APPS_PREFIX}/petsc${APP_BUILD_TAG}/${PETSC_DIR_SUFFIX}"
     export PETSC_ARCH=default
+    export HDF5_MPI=ON
+    export HDF5_DIR="${PETSC_DIR}/${PETSC_ARCH}"
+    export CC=$( which mpicc )
+    export CXX=$( which mpicxx )
+    export FC=$( which mpif90 )
 
     export PYOP2_CACHE_DIR=/tmp/pyop2
     export FIREDRAKE_TSFC_KERNEL_CACHE_DIR=/tmp/tsfc
     export XDG_CACHE_HOME=/tmp/xdg
-    export FIREDRAKE_CI_TESTS=1
 
     export MPIRUN="${MPIRUN:-mpirun}"
     mpirun_path=$(which "${MPIRUN}")
@@ -130,8 +143,9 @@ function inner1() {
 
     ### i2.) Install
     cd "${APP_IN_CONTAINER_PATH}/${TAG}"
-    "python${PY_VERSION}" firedrake/scripts/firedrake-install --honour-petsc-dir --mpiexec="${MPIRUN}" --mpihome="${MPI_HOME}" --mpicc=$(which mpicc) --mpicxx=$(which mpicxx) --mpif90=$(which mpif90) --no-package-manager "${OPTS_64BIT[@]}" --venv-name venv
+    python${PY_VERSION} -m venv venv
     source "${APP_IN_CONTAINER_PATH}/${TAG}/venv/bin/activate"
+    pip3 install --no-binary h5py './firedrake[ci]'
     pip3 install jupyterlab assess gmsh imageio jupytext openpyxl pandas pyvista[all] shapely pyroltrilinos siphash24 jupyterview xarray trame_jupyter_extension pygplates
 
     ### i3.) Installation repair

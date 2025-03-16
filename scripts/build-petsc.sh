@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -e
 ### Recommended PBS job
-### qsub -I -lncpus=12,mem=48GB,walltime=2:00:00,jobfs=100GB,storage=gdata/xd2+scratch/xd2+gdata/fp50+scratch/fp50...
+### qsub -Wblock=true -lncpus=12,mem=48GB,walltime=2:00:00,jobfs=100GB,storage=gdata/xd2+scratch/xd2+gdata/fp50+scratch/fp50...
 ### Recommended SLURM job
-### salloc -p work -n 12 -N 1 -c 1 -t 2:00:00 --mem 48G
+### sbatch -p work -n 12 -N 1 -c 1 -t 2:00:00 --mem 48G --wait
 ###
 ### Use github action to checkout out petsc repo, tar it up and
 ### copy to HPC system
