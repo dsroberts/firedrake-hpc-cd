@@ -110,20 +110,6 @@ function inner1() {
     module load "${MPI_MODULE}"
     module load "${PY_MODULE}"
 
-<<<<<<< HEAD
-    declare -a EXTRA_OPTS=()
-    if [[ "${DO_64BIT}" ]]; then
-        export EXTRA_OPTS+=( "--petsc-int-type int64" )
-    fi
-=======
-    ### ?
-    #if [[ "${DO_64BIT}" ]]; then
-    #    export OPTS_64BIT="--petsc-int-type int64"
-    #else
-    #    export OPTS_64BIT=""
-    #fi
->>>>>>> firedrake_pip_install
-
     export PETSC_DIR="${APPS_PREFIX}/petsc${APP_BUILD_TAG}/${PETSC_DIR_SUFFIX}"
     export PETSC_ARCH=default
     export HDF5_MPI=ON
