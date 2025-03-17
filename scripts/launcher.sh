@@ -150,7 +150,7 @@ $debug "SINGULARITYENV_PREPEND_PATH= " ${SINGULARITYENV_PREPEND_PATH}
 
 declare -a overlay_args=()
 while IFS= read -r -d: i; do
-    overlay_args+=( "${overlay_args}" )
+    overlay_args+=( "--overlay=${i}" )
 done<<<"${CONTAINER_OVERLAY_PATH%:}:"
 
 $debug "overlay_args= " "${overlay_args[@]}"
@@ -163,5 +163,5 @@ bind_str="${bind_str%,}"
 
 $debug "binding args = ${bind_str}"
 
-$debug "Singularity invocation: ${SINGULARITY_BINARY_PATH} -s exec --bind" "${bind_str[@]}" "${overlay_args} ${CONTAINER_PATH}" "${cmd_to_run[@]}"
+$debug "Singularity invocation: ${SINGULARITY_BINARY_PATH} -s exec --bind" "${bind_str[@]}" "${overlay_args[@]}" "${CONTAINER_PATH}" "${cmd_to_run[@]}"
 "${SINGULARITY_BINARY_PATH}" -s exec --bind "${bind_str}" "${overlay_args[@]}" "${CONTAINER_PATH}" "${cmd_to_run[@]}"
