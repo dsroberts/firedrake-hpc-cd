@@ -32,4 +32,5 @@ runs:
           Hostname ${{ steps.get_fqdn.outputs.fqdn }}
           User ${{inputs.user}}
           IdentityFile ~/.ssh/${{inputs.system}}.key
+          ServerAliveInterval 120
         EOF

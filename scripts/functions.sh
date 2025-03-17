@@ -115,10 +115,7 @@ function make_modulefiles() {
     ### A system must provide an APP_NAME-base module file - everything else is optional - module file must already have ${MODULE_SUFFIX} baked in.
     copy_and_replace "${here}/../module/${FD_SYSTEM}/${APP_NAME}-base" "${MODULE_FILE}" APP_IN_CONTAINER_PATH COMPILER_MODULE SINGULARITY_MODULE MPI_MODULE TAG VERSION_TAG PYOP2_COMPILER_OPT_FLAGS PETSC_MODULE
     if [[ -z "${VERSION_TAG}" && -z "${BUILD_BRANCH}" ]]; then
-        if [[ "${MODULE_SUFFIX}" == .lua ]]; then
-            rm -f ${MODULE_FILE%/*}/default
-            ln -sf "${TAG}.lua" "${MODULE_FILE%/*}/default"
-        else
+        if ! [[ "${MODULE_SUFFIX}" == .lua ]]; then
             copy_and_replace "${here}/../module/${FD_SYSTEM}/version-base" "${MODULE_FILE%/*}/.version" TAG
         fi
     fi
