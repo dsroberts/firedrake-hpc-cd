@@ -129,7 +129,7 @@ function inner1() {
 
     ### i2.) Install
     cd "${APP_IN_CONTAINER_PATH}/${TAG}"
-    python${PY_VERSION} -m venv venv
+    "python${PY_VERSION}" -m venv venv
     source "${APP_IN_CONTAINER_PATH}/${TAG}/venv/bin/activate"
     pip3 install --no-binary h5py './firedrake[ci]'
     pip3 install jupyterlab assess gmsh imageio jupytext openpyxl pandas pyvista[all] shapely pyroltrilinos siphash24 jupyterview xarray trame_jupyter_extension pygplates
