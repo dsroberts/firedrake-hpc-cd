@@ -39,7 +39,8 @@ pushd "${APP_NAME}"
 ### Tag with upstream version - in the unlikely event
 ### of multiple tags in a petsc release, pick the first
 repo_tags=($(git tag --points-at HEAD))
-export TAG="${repo_tags[0]}"
+### Trim leading 'v'
+export TAG="${repo_tags[0]//v/}"
 ### matches short commit length on gitlab
 export GIT_COMMIT=$(git rev-parse --short=8 HEAD)
 export REPO_TAGS=()

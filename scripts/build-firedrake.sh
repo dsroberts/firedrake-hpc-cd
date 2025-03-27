@@ -131,8 +131,8 @@ function inner1() {
     cd "${APP_IN_CONTAINER_PATH}/${TAG}"
     "python${PY_VERSION}" -m venv venv
     source "${APP_IN_CONTAINER_PATH}/${TAG}/venv/bin/activate"
-    pip3 install --no-binary h5py './firedrake[ci]'
-    pip3 install jupyterlab assess gmsh imageio jupytext openpyxl pandas pyvista[all] shapely pyroltrilinos siphash24 jupyterview xarray trame_jupyter_extension pygplates
+    pip3 install --no-binary h5py './firedrake'
+    pip3 install jupyterlab assess gmsh imageio jupytext openpyxl pandas pyvista[all] shapely pyroltrilinos siphash24 jupyterview xarray trame_jupyter_extension pygplates ipympl matplotlib jax mpi-pytest nbval ngsPETSc pylit pytest pytest-split pytest-timeout pytest-xdist
 
     ### i3.) Installation repair
     if [[ $(type -t __firedrake_post_build_in_container_hook) == function ]]; then
