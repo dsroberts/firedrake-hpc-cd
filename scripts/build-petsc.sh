@@ -36,12 +36,13 @@ if [[ ! -d "${EXTRACT_DIR}/${APP_NAME}" ]]; then
     tar -xf "${BUILD_STAGE_DIR}/${APP_NAME}.tar"
 fi
 pushd "${APP_NAME}"
-#export TAG=$( date +%Y%m%d )
-### Tag with date of commit
-export TAG=$(git show --no-patch --format=%cd --date=format:%Y%m%d)
-### matches short commit length on github
-export GIT_COMMIT=$(git rev-parse --short=7 HEAD)
-export REPO_TAGS=($(git tag --points-at HEAD))
+### Tag with upstream version - in the unlikely event
+### of multiple tags in a petsc release, pick the first
+repo_tags=($(git tag --points-at HEAD))
+export TAG="${repo_tags[0]}"
+### matches short commit length on gitlab
+export GIT_COMMIT=$(git rev-parse --short=8 HEAD)
+export REPO_TAGS=()
 popd
 
 export APP_BUILD_TAG=""

@@ -34,13 +34,6 @@ jobs:
         with:
           system: ${{ matrix.system }}
           repopath: ${{ secrets[steps.get_sys_vars.outputs.repo_path_var] }}
-      - name: Setup PETSc source
-        uses: ./.github/actions/setup_app_source
-        with:
-          system: ${{ matrix.system }}
-          app: petsc
-          repo: firedrakeproject/petsc
-          branch: firedrake
       - name: Setup Firedrake source
         uses: ./.github/actions/setup_app_source
         with:
@@ -48,6 +41,17 @@ jobs:
           app: firedrake
           repo: firedrakeproject/firedrake
           branch: master
+      - name: Get petsc tag
+        id: get_petsc_tag
+        run: |
+          echo petsc_tag=$( ./firedrake/scripts/firedrake-configure --no-package-manager --petscver ) >> $GITHUB_OUTPUT
+      - name: Checkout petsc
+        uses: ./.github/actions/setup_app_source_gitlab
+        with:
+          system: ${{ matrix.system }}
+          app: petsc
+          repo: petsc/petsc
+          branch: ${{ steps.get_petsc_tag.outputs.petsc_tag }}
       - name: Setup G-ADOPT source
         uses: ./.github/actions/setup_app_source
         with:
