@@ -8,11 +8,7 @@
 
 if [[ $( hostname ) =~ "gadi-" ]]; then
     export FD_SYSTEM="gadi"
-elif [[ $( grep -c '     ___  ___| |_ ___  _ __ (_)_  __           ,########(,,  ...     ,########/,' /software/pawsey/motd 2>/dev/null ) -gt 0 ]]; then
-    ###                 / __|/ _ \ __/ _ \| '_ \| \ \/ /           ,#########,,,,,,,,,,,,,,#######,,
-    ###                 \__ \  __/ || (_) | | | | |>  <             ,,,####,,,,,,,,,,,,,,,,,*###,,,
-    ###                 |___/\___|\__\___/|_| |_|_/_/\_\             ,,//,,,,,,,,,,,,,,,,,,,,,,,,,
-    ###                  The Pawsey Supercomputer System              .,,,,,,,,,,,,,,,,,,,,,,,,,
+elif [[ $( hostname -f ) =~ "setonix.pawsey.org.au" ]]; then
     export FD_SYSTEM="setonix"
 fi
 
