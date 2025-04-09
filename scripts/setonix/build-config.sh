@@ -9,7 +9,8 @@
 ### PY_VERSION          |   BUILD_CONTAINER_PATH          |   COMPILER_OPT_FLAGS
 ### BUILD_NCPUS         |   BUILD_STAGE_DIR               |   PYOP2_COMPILER_OPT_FLAGS
 ###                     |   EXTRACT_DIR                   |   get_system_specific_petsc_flags()
-###                     |   bind_dirs                     |
+###                     |   bind_dirs                     |   EXTERNAL_COMMANDS_TO_INCLUDE
+export EXTERNAL_COMMANDS_TO_INCLUDE
 
 export MPI_MODULE=cray-mpich/8.1.27
 export PY_MODULE=cray-python/3.11.5
@@ -71,5 +72,8 @@ export MODULE_USE_PATHS
 ### Need compiler module loaded ahead of time to resolve cmake and autoconf
 declare -a EXTRA_MODULES=("${PRGENV_MODULE}" "${COMPILER_MODULE}" "cmake/3.27.7" "autoconf/2.69" "libfabric/1.15.2.0")
 export EXTRA_MODULES
+
+declare -a EXTERNAL_COMMANDS_TO_INCLUDE=( "make" )
+export EXTERNAL_COMMANDS_TO_INCLUDE
 
 declare -a bind_dirs=("/opt/admin-pe" "/opt/AMD" "/opt/amdgpu" "/opt/cray" "/opt/modulefiles" "/opt/pawsey" "/bin" "/boot" "/etc" "/lib" "/lib64" "/local" "/pe" "/ram" "/rootfs.rw" "/root_ro" "/run" "/scratch" "/usr" "/sys/fs/cgroup" "/var/lib/sss" "/var/run/munge" "/var/lib/ca-certificates")

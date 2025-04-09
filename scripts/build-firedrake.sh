@@ -73,8 +73,12 @@ if [[ -d "${MODULE_PREFIX}/petsc" ]]; then
         if [[ $(type -t __firedrake_pre_petsc_version_check) == function ]]; then
             __firedrake_pre_petsc_version_check
         fi
+        petsc_mod=petsc"${APP_BUILD_TAG}"
+        if [[ "${VERSION_TAG}" ]]; then
+            petsc_mod+="/${VERSION_TAG}"
+        fi
         module use "${MODULE_PREFIX}"
-        module load petsc${APP_BUILD_TAG}
+        module load "${petsc_mod}"
         ### Get petsc module name
         petsc_module=$(module -t list 2>&1 | grep petsc)
         echo PETSC_MODULE "${petsc_module}"
@@ -166,7 +170,7 @@ mv "${APP_NAME}" "${OVERLAY_EXTERNAL_PATH}/${TAG}"
 ### 8.) Launch container build
 bind_str=""
 for bind_dir in "${bind_dirs[@]}"; do
-    [[ -d "${bind_dir}" ]] && bind_str="${bind_str}${bind_dir},"
+    [[ -d "${bind_dir}" ]] && bind_str+="${bind_dir},"
 done
 
 ### Derive first directory of absolute path outside of the container
@@ -218,6 +222,9 @@ cp "${here}/${FD_SYSTEM}/launcher_conf.sh" "${APP_IN_CONTAINER_PATH}-scripts/${T
 [[ -d "${here}/${FD_SYSTEM}/overrides/" ]] && cp "${here}/${FD_SYSTEM}"/overrides/* "${APP_IN_CONTAINER_PATH}-scripts/${TAG}/overrides/"
 for i in "${SQUASHFS_PATH}/${SQUASHFS_APP_DIR}"/venv/bin/*; do
     ln -s launcher.sh "${APP_IN_CONTAINER_PATH}-scripts/${TAG}/${i##*/}"
+done
+for cmd in "${EXTERNAL_COMMANDS_TO_INCLUDE[@]}"; do
+    ln -s launcher.sh "${APP_IN_CONTAINER_PATH}-scripts/${TAG}/${cmd}"
 done
 
 ### 11.) Permissions

@@ -9,7 +9,7 @@
 ### PY_VERSION          |   BUILD_CONTAINER_PATH          |   COMPILER_OPT_FLAGS
 ### BUILD_NCPUS         |   BUILD_STAGE_DIR               |   PYOP2_COMPILER_OPT_FLAGS
 ###                     |   EXTRACT_DIR                   |   get_system_specific_petsc_flags()
-###                     |   bind_dirs                     |
+###                     |   bind_dirs                     |   EXTERNAL_COMMANDS_TO_INCLUDE
 
 export MPI_MODULE=openmpi/4.0.7
 ### Must have numpy - no reason not to use NCI-provided modules
@@ -78,5 +78,8 @@ export CMAKE_GENERATOR='Unix Makefiles'
 ### with system autoconf - see https://community.intel.com/t5/Intel-Fortran-Compiler/ifx-2021-1-beta04-HPC-Toolkit-build-error-with-loopopt/td-p/1184181
 declare -a EXTRA_MODULES=( autoconf/2.72 "${MKL_MODULE}" )
 export EXTRA_MODULES
+
+declare -a EXTERNAL_COMMANDS_TO_INCLUDE=( "make" )
+export EXTERNAL_COMMANDS_TO_INCLUDE
 
 declare -a bind_dirs=("/etc" "/half-root" "/local" "/ram" "/run" "/system" "/usr" "/var/lib/sss" "/var/lib/rpm" "/var/run/munge" "/sys/fs/cgroup" "/iointensive")
