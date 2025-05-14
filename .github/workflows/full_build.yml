@@ -41,6 +41,7 @@ jobs:
           app: firedrake
           repo: firedrakeproject/firedrake
           branch: ''
+          depth: 0
           fetch_latest_tag: true
       - name: Get petsc tag
         id: get_petsc_tag
