@@ -48,14 +48,24 @@ function __firedrake_post_build_in_container_hook() {
     mv venv/include/Intel/* venv/include
     rmdir venv/{lib,include}/Intel
 
+    ###    e.) Link in entire PRRTE build
+    prte_path=${OMPI_PRTERUN//\/bin\/prterun/}
+    export PRTE_MODULE=${prte_path/\/apps\/}
+    module load "${PRTE_MODULE}"
+    for i in $(find "${PRRTE_BASE}/" ! -type d); do
+        f="${i//$PRRTE_BASE\//}"
+        mkdir -p "venv/${f%/*}"
+        ln -sf ${i} "venv/${f}"
+    done
+
 }
 
 function __firedrake_extra_squashfs_contents() {
-    wget https://dl.rockylinux.org/pub/rocky/8/AppStream/x86_64/os/Packages/m/mesa-dri-drivers-23.1.4-3.el8_10.x86_64.rpm
-    rpm2cpio mesa-dri-drivers-23.1.4-3.el8_10.x86_64.rpm | cpio -idmV
+    wget https://dl.rockylinux.org/pub/rocky/8/AppStream/x86_64/os/Packages/m/mesa-dri-drivers-23.1.4-4.el8_10.x86_64.rpm
+    rpm2cpio mesa-dri-drivers-23.1.4-4.el8_10.x86_64.rpm | cpio -idmV
     mv usr/lib64/dri "${SQUASHFS_PATH}/${SQUASHFS_APP_DIR}"
 
-    wget https://dl.rockylinux.org/pub/rocky/8/AppStream/x86_64/os/Packages/x/xorg-x11-server-Xvfb-1.20.11-24.el8_10.x86_64.rpm
-    rpm2cpio xorg-x11-server-Xvfb-1.20.11-24.el8_10.x86_64.rpm | cpio -idmV
+    wget https://dl.rockylinux.org/pub/rocky/8/AppStream/x86_64/os/Packages/x/xorg-x11-server-Xvfb-1.20.11-25.el8_10.x86_64.rpm
+    rpm2cpio xorg-x11-server-Xvfb-1.20.11-25.el8_10.x86_64.rpm | cpio -idmV
     mv usr/bin/Xvfb "${SQUASHFS_PATH}/${SQUASHFS_APP_DIR}/venv/bin"
 }

@@ -23,7 +23,6 @@ setenv PYOP2_CXX mpicxx
 setenv OMPI_MCA_coll ^holl
 
 ### Capture OpenMPI runtime settings
-setenv HCOLL_ENABLE_MCAST 0
 setenv OMPI_MCA_orte_tmpdir_base $tmpdir_base
 setenv VT_MAX_FLUSHES 0
 setenv VT_PFORM_LDIR $tmpdir_base

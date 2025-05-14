@@ -40,12 +40,15 @@ if [[ "${BUILD_BRANCH}" ]]; then
     git checkout "${BUILD_BRANCH}"
     export TAG="${BUILD_BRANCH//\//_}"
 else
-    ### Tag with date of commit
-    export TAG=$(git show --no-patch --format=%cd --date=format:%Y%m%d)
+    ### If we're told nothing, check if we're on a tag and build that, otherwise
+    ### tag with whatever branch we're on and the date.
+    if [[ $( git tag --points-at HEAD ) ]]; then
+        export RELEASE_TAG=$( git tag --points-at HEAD )
+        export TAG="${RELEASE_TAG//.post*/}"
+    else
+        export TAG=$(git branch)"-"$(git show --no-patch --format=%cd --date=format:%Y%m%d)
+    fi
 fi
-### matches short commit length on github
-export GIT_COMMIT=$(git rev-parse --short=7 HEAD)
-export REPO_TAGS=($(git tag --points-at HEAD))
 popd
 
 export APP_BUILD_TAG=""
@@ -105,11 +108,10 @@ if [[ "${BUILD_BRANCH}" ]]; then
 fi
 
 ### 4.) Define 'inner' function(s)
-function inner1() {
+function inner() {
 
     ### i1.) Load modules & set environment
     [[ "${EXTRA_MODULES[@]}" ]] && module load "${EXTRA_MODULES[@]}"
-
     module load "${COMPILER_MODULE}"
     module load "${MPI_MODULE}"
     module load "${PY_MODULE}"
@@ -118,9 +120,9 @@ function inner1() {
     export PETSC_ARCH=default
     export HDF5_MPI=ON
     export HDF5_DIR="${PETSC_DIR}/${PETSC_ARCH}"
-    export CC=$( which mpicc )
-    export CXX=$( which mpicxx )
-    export FC=$( which mpif90 )
+    export CC=$(which mpicc)
+    export CXX=$(which mpicxx)
+    export FC=$(which mpif90)
 
     export PYOP2_CACHE_DIR=/tmp/pyop2
     export FIREDRAKE_TSFC_KERNEL_CACHE_DIR=/tmp/tsfc
@@ -131,12 +133,17 @@ function inner1() {
     export MPI_HOME=$(realpath "${mpirun_path%/*}"/..)
     unset PYTHONPATH
 
+    ### TEMP Cython workaround
+    echo 'Cython<3.1' > "${EXTRACT_DIR}/constraints.txt"
+    export PIP_CONSTRAINT="${EXTRACT_DIR}/constraints.txt"
+    ### END TEMP
+
     ### i2.) Install
     cd "${APP_IN_CONTAINER_PATH}/${TAG}"
     "python${PY_VERSION}" -m venv venv
     source "${APP_IN_CONTAINER_PATH}/${TAG}/venv/bin/activate"
-    pip3 install --no-binary h5py './firedrake'
-    pip3 install jupyterlab assess gmsh imageio jupytext openpyxl pandas pyvista[all] shapely pyroltrilinos siphash24 jupyterview xarray trame_jupyter_extension pygplates ipympl matplotlib jax mpi-pytest nbval ngsPETSc pylit pytest pytest-split pytest-timeout pytest-xdist
+    pip3 install --no-binary h5py './firedrake[check]'
+    pip3 install jupyterlab assess gmsh imageio jupytext openpyxl pandas pyvista[all] shapely pyroltrilinos siphash24 jupyterview xarray trame_jupyter_extension pygplates ipympl matplotlib jax nbval ngsPETSc pylit pytest-split pytest-timeout pytest-xdist
 
     ### i3.) Installation repair
     if [[ $(type -t __firedrake_post_build_in_container_hook) == function ]]; then
@@ -148,25 +155,12 @@ function inner1() {
 ### 5.) Run inner function(s)
 if [[ "$#" -ge 1 ]]; then
     if [[ "${1}" == '--inner' ]]; then
-        inner1
-        exit 0
+        inner
     fi
+    exit 0
 fi
 
 ### 6.) Pre-existing build check
-if ! [[ "${FD_INSTALL_DRY_RUN}" ]]; then
-    if [[ -L "${APP_IN_CONTAINER_PATH}/${TAG}" ]]; then
-        echo "This version of ${APP_NAME} is already installed - doing nothing"
-        exit 0
-    fi
-fi
-
-### 7.) Extract source & dependent squashfs into overlay
-copy_squash_to_overlay "${APPS_PREFIX}/petsc${APP_BUILD_TAG}/petsc-${PETSC_TAG}.sqsh" "${SQUASHFS_PATH}/petsc${APP_BUILD_TAG}-${PETSC_DIR_SUFFIX}" "${OVERLAY_EXTERNAL_PATH%/*}/petsc${APP_BUILD_TAG}/${PETSC_DIR_SUFFIX}"
-
-mkdir -p "${OVERLAY_EXTERNAL_PATH}/${TAG}"
-mv "${APP_NAME}" "${OVERLAY_EXTERNAL_PATH}/${TAG}"
-
 ### 8.) Launch container build
 bind_str=""
 for bind_dir in "${bind_dirs[@]}"; do
@@ -183,6 +177,26 @@ first_dir="/${tmp%%/*}"
 export BIND_STR="${bind_str}${first_dir}:${first_dir}-push-aside"
 
 module load "${SINGULARITY_MODULE}"
+
+if ! [[ "${FD_INSTALL_DRY_RUN}" ]]; then
+    if [[ -L "${APP_IN_CONTAINER_PATH}/${TAG}" ]]; then
+        ### I wish this wasn't the only way to check the firedrake version
+        export DO_UPDATE=1
+        ver=$( singularity -s exec --bind "${BIND_STR}" --overlay="${APP_IN_CONTAINER_PATH}/${APP_NAME}-${TAG}.sqsh" "${BUILD_CONTAINER_PATH}/base.sif" grep '^version' "/opt/${APP_NAME}-${TAG}/${APP_NAME}/pyproject.toml" )
+        ver="${ver##* }"
+        installed_version="${ver//\"/}"
+        if [[ "${installed_version}" == "${RELEASE_TAG}" ]]; then
+            echo "This version of firedrake is already installed"
+            exit 0
+        fi
+    fi
+fi
+
+### 7.) Extract source & dependent squashfs into overlay
+copy_squash_to_overlay "${APPS_PREFIX}/petsc${APP_BUILD_TAG}/petsc-${PETSC_TAG}.sqsh" "${SQUASHFS_PATH}/petsc${APP_BUILD_TAG}-${PETSC_DIR_SUFFIX}" "${OVERLAY_EXTERNAL_PATH%/*}/petsc${APP_BUILD_TAG}/${PETSC_DIR_SUFFIX}"
+
+mkdir -p "${OVERLAY_EXTERNAL_PATH}/${TAG}"
+mv "${APP_NAME}" "${OVERLAY_EXTERNAL_PATH}/${TAG}"
 
 if [[ $(type -t __firedrake_pre_container_launch_hook) == function ]]; then
     __firedrake_pre_container_launch_hook
@@ -210,22 +224,26 @@ if [[ "${FD_INSTALL_DRY_RUN}" ]]; then
 fi
 ### 10.) Create symlinks & modules
 mkdir -p "${APP_IN_CONTAINER_PATH}"
-ln -sf "/opt/${SQUASHFS_APP_DIR}" "${APP_IN_CONTAINER_PATH}/${TAG}"
-
 cp "${APP_NAME}.sqsh" "${APP_IN_CONTAINER_PATH}/${APP_NAME}-${TAG}.sqsh"
 
-make_modulefiles
+if ! [[ "${DO_UPDATE}" ]]; then
 
-mkdir -p "${APP_IN_CONTAINER_PATH}-scripts/${TAG}/overrides"
-cp "${here}/launcher.sh" "${APP_IN_CONTAINER_PATH}-scripts/${TAG}"
-cp "${here}/${FD_SYSTEM}/launcher_conf.sh" "${APP_IN_CONTAINER_PATH}-scripts/${TAG}"
-[[ -d "${here}/${FD_SYSTEM}/overrides/" ]] && cp "${here}/${FD_SYSTEM}"/overrides/* "${APP_IN_CONTAINER_PATH}-scripts/${TAG}/overrides/"
-for i in "${SQUASHFS_PATH}/${SQUASHFS_APP_DIR}"/venv/bin/*; do
-    ln -s launcher.sh "${APP_IN_CONTAINER_PATH}-scripts/${TAG}/${i##*/}"
-done
-for cmd in "${EXTERNAL_COMMANDS_TO_INCLUDE[@]}"; do
-    ln -s launcher.sh "${APP_IN_CONTAINER_PATH}-scripts/${TAG}/${cmd}"
-done
+    ln -sf "/opt/${SQUASHFS_APP_DIR}" "${APP_IN_CONTAINER_PATH}/${TAG}"
+
+    make_modulefiles
+
+    mkdir -p "${APP_IN_CONTAINER_PATH}-scripts/${TAG}/overrides"
+    cp "${here}/launcher.sh" "${APP_IN_CONTAINER_PATH}-scripts/${TAG}"
+    cp "${here}/${FD_SYSTEM}/launcher_conf.sh" "${APP_IN_CONTAINER_PATH}-scripts/${TAG}"
+    [[ -d "${here}/${FD_SYSTEM}/overrides/" ]] && cp "${here}/${FD_SYSTEM}"/overrides/* "${APP_IN_CONTAINER_PATH}-scripts/${TAG}/overrides/"
+    for i in "${SQUASHFS_PATH}/${SQUASHFS_APP_DIR}"/venv/bin/*; do
+        ln -s launcher.sh "${APP_IN_CONTAINER_PATH}-scripts/${TAG}/${i##*/}"
+    done
+    for cmd in "${EXTERNAL_COMMANDS_TO_INCLUDE[@]}"; do
+        ln -s launcher.sh "${APP_IN_CONTAINER_PATH}-scripts/${TAG}/${cmd}"
+    done
+
+fi
 
 ### 11.) Permissions
 fix_apps_perms "${MODULE_FILE%/*}" "${APP_IN_CONTAINER_PATH}" "${APP_IN_CONTAINER_PATH}"-scripts

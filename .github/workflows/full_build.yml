@@ -40,7 +40,8 @@ jobs:
           system: ${{ matrix.system }}
           app: firedrake
           repo: firedrakeproject/firedrake
-          branch: master
+          branch: ''
+          fetch_latest_tag: true
       - name: Get petsc tag
         id: get_petsc_tag
         run: |

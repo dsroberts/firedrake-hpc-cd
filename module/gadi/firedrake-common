@@ -19,8 +19,12 @@ setenv PYOP2_CACHE_DIR $tmpdir_base/pyop2
 setenv FIREDRAKE_TSFC_KERNEL_CACHE_DIR $tmpdir_base/tsfc
 setenv XDG_CACHE_HOME $tmpdir_base/xdg
 
+### Correct OpenMPI 5 include/link paths
+setenv OMPI_CFLAGS -I$prefix/$tag/venv/include
+setenv OMPI_LDFLAGS -L$prefix/$tag/venv/lib
 ### Ensure remote MPI tasks are launched from within the container
 setenv OMPI_MCA_orte_launch_agent $prefix-scripts/$tag/orted
+setenv PRTE_MCA_prte_launch_agent $prefix-scripts/$tag/prted
 
 if { [ info exists env(MY_GADOPT) ] } {
     if { [ file exists $::env(MY_GADOPT)/gadopt/__init__.py ] } {

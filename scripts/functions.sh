@@ -119,13 +119,10 @@ function make_modulefiles() {
             copy_and_replace "${here}/../module/${FD_SYSTEM}/version-base" "${MODULE_FILE%/*}/.version" TAG
         fi
     fi
-    [[ -e "${here}/../module/${FD_SYSTEM}/${APP_NAME}-common" ]] && cp "${here}/../module/${FD_SYSTEM}/${APP_NAME}-common" "${MODULE_FILE%/*}"
+    [[ -z "${COMMON_MODULE_EXT}" ]] && export COMMON_MODULE_EXT="common"
+    [[ -e "${here}/../module/${FD_SYSTEM}/${APP_NAME}-${COMMON_MODULE_EXT}" ]] && cp "${here}/../module/${FD_SYSTEM}/${APP_NAME}-${COMMON_MODULE_EXT}" "${MODULE_FILE%/*}"
 
     if [[ "${MODULE_SUFFIX}" == .lua ]]; then
-        echo "module_version(\"${APP_NAME}${APP_BUILD_TAG}/${TAG}${VERSION_TAG}\",\"${GIT_COMMIT}${VERSION_TAG}\")" >>"${MODULE_FILE%/*}/.modulerc.lua"
-        for tag in "${REPO_TAGS[@]}"; do
-            echo "module_version(\"${APP_NAME}${APP_BUILD_TAG}/${TAG}${VERSION_TAG}\",\""${tag}${VERSION_TAG}"\")" >>"${MODULE_FILE%/*}/.modulerc.lua"
-        done
         if [[ "${VERSION_TAG}" ]]; then
             echo "module_version(\"${APP_NAME}${APP_BUILD_TAG}/${TAG}${VERSION_TAG}\",\"${VERSION_TAG:1}\")" >>"${MODULE_FILE%/*}/.modulerc.lua"
         fi
@@ -134,10 +131,6 @@ function make_modulefiles() {
             echo '#%Module1.0' >"${MODULE_FILE%/*}/.modulerc"
             echo '' >>"${MODULE_FILE%/*}/.modulerc"
         fi
-        echo module-version "${APP_NAME}${APP_BUILD_TAG}/${TAG}${VERSION_TAG}" "${GIT_COMMIT}${VERSION_TAG}" >>"${MODULE_FILE%/*}/.modulerc"
-        for tag in "${REPO_TAGS[@]}"; do
-            echo module-version "${APP_NAME}${APP_BUILD_TAG}/${TAG}${VERSION_TAG}" "${tag}${VERSION_TAG}" >>"${MODULE_FILE%/*}/.modulerc"
-        done
         if [[ "${VERSION_TAG}" ]]; then
             echo module-version "${APP_NAME}${APP_BUILD_TAG}/${TAG}${VERSION_TAG}" "${VERSION_TAG:1}" >>"${MODULE_FILE%/*}/.modulerc"
         fi

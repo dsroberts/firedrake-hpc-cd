@@ -10,7 +10,7 @@
 ### BUILD_NCPUS         |   BUILD_STAGE_DIR               |   PYOP2_COMPILER_OPT_FLAGS
 ###                     |   EXTRACT_DIR                   |   get_system_specific_petsc_flags()
 ###                     |   bind_dirs                     |   EXTERNAL_COMMANDS_TO_INCLUDE
-export EXTERNAL_COMMANDS_TO_INCLUDE
+###                     |                                 |   COMMON_MODULE_EXT
 
 export MPI_MODULE=cray-mpich/8.1.27
 export PY_MODULE=cray-python/3.11.5

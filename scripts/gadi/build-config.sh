@@ -10,15 +10,16 @@
 ### BUILD_NCPUS         |   BUILD_STAGE_DIR               |   PYOP2_COMPILER_OPT_FLAGS
 ###                     |   EXTRACT_DIR                   |   get_system_specific_petsc_flags()
 ###                     |   bind_dirs                     |   EXTERNAL_COMMANDS_TO_INCLUDE
+###                     |                                 |   COMMON_MODULE_EXT
 
-export MPI_MODULE=openmpi/4.0.7
+export MPI_MODULE=openmpi/5.0.5
 ### Must have numpy - no reason not to use NCI-provided modules
 export PY_MODULE=python3/3.11.7
 export SINGULARITY_MODULE=singularity
 
 compiler_type=intel-compiler-llvm
-compiler_version=2024.2.0
-mkl_version=2024.2.0
+compiler_version=2024.2.1
+mkl_version=2024.2.1
 
 ### Define any compiler-specific things here
 if [[ $compiler_type == "intel-compiler" ]]; then
@@ -76,7 +77,7 @@ export CMAKE_GENERATOR='Unix Makefiles'
 
 ### pnetcdf will not compile against oneAPI fortran compiler
 ### with system autoconf - see https://community.intel.com/t5/Intel-Fortran-Compiler/ifx-2021-1-beta04-HPC-Toolkit-build-error-with-loopopt/td-p/1184181
-declare -a EXTRA_MODULES=( autoconf/2.72 "${MKL_MODULE}" )
+declare -a EXTRA_MODULES=( autoconf/2.72 hwloc/2.11.2 "${MKL_MODULE}" )
 export EXTRA_MODULES
 
 declare -a EXTERNAL_COMMANDS_TO_INCLUDE=( "make" )
