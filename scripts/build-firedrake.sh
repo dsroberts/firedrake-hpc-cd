@@ -78,7 +78,7 @@ if [[ -d "${MODULE_PREFIX}/petsc" ]]; then
         fi
         petsc_mod=petsc"${APP_BUILD_TAG}"
         if [[ "${VERSION_TAG}" ]]; then
-            petsc_mod+="/${VERSION_TAG}"
+            petsc_mod+="/${VERSION_TAG:1}"
         fi
         module use "${MODULE_PREFIX}"
         module load "${petsc_mod}"
