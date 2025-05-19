@@ -40,8 +40,7 @@ pushd "${APP_NAME}"
 ### of multiple tags in a petsc release, pick the first
 repo_tags=($(git tag --points-at HEAD))
 ### Trim leading 'v'
-#export TAG="${repo_tags[0]//v/}"
-export TAG="${repo_tags[0]}"
+export TAG="${repo_tags[0]//v/}"
 ### matches short commit length on gitlab
 export GIT_COMMIT=$(git rev-parse --short=8 HEAD)
 export REPO_TAGS=()
@@ -88,7 +87,15 @@ function inner() {
         get_system_specific_petsc_flags
     fi
 
-    "python${PY_VERSION}" ./configure PETSC_DIR="${APP_IN_CONTAINER_PATH}/${TAG}" PETSC_ARCH=default --with-cc="${MPICC}" --with-cxx="${MPICXX}" --with-fc="${MPIF90}" --with-mpiexec="${MPIEXEC}" COPTFLAGS="${COMPILER_OPT_FLAGS}" CXXOPTFLAGS="${COMPILER_OPT_FLAGS}" FOPTFLAGS="${COMPILER_OPT_FLAGS}" "${EXTRA_OPTS[@]}" --download-suitesparse --with-hwloc-dir=/usr --with-zlib --download-pastix  --download-mumps --download-hdf5 --download-hypre --download-netcdf --download-pnetcdf --download-superlu_dist --with-shared-libraries=1 --with-c2html=0 --with-fortran-bindings=0 --download-metis --download-ptscotch --with-debugging=0 --download-bison "${SYSTEM_SPECIFIC_FLAGS[@]}" --with-make-np="${BUILD_NCPUS}"
+    ### output from firedrake-configure --no-package-manager --petscconf:
+    ### --with-c2html=0 --with-debugging=0 --with-fortran-bindings=0 --with-shared-libraries=1 --with-strict-petscerrorcode PETSC_ARCH=arch-firedrake-default --COPTFLAGS='-O3 -march=native -mtune=native' --CXXOPTFLAGS='-O3 -march=native -mtune=native' --FOPTFLAGS='-O3 -march=native -mtune=native' --download-bison --download-fftw --download-hdf5 --download-hwloc --download-metis --download-mumps --download-netcdf --download-pnetcdf --download-ptscotch --download-scalapack --download-suitesparse --download-superlu_dist --download-zlib --download-hypre
+    ### Key differences between firedrake-configure and the command below
+    ###  - Per system definitions of compilers & compiler options (--with-cc=, --with-cxx=, --with-fc= and --with-mpiexec= are provided)
+    ###  - HPC systems are expected to provide hwloc and zlib (--download-hwloc and --download-zlib replaced with --with-hwloc and --with-zlib)
+    ###  - Flexibility when selecting fftw/blas/lapack/scalapack implementations. The per-system get_system_specific_flags function sets fftw/blas/lapack/scalapack options
+    ###    Optimised libraries (MKL, BLIS, etc) will be preferred over reference implementations
+    "python${PY_VERSION}" ./configure PETSC_DIR="${APP_IN_CONTAINER_PATH}/${TAG}" PETSC_ARCH=default --with-cc="${MPICC}" --with-cxx="${MPICXX}" --with-fc="${MPIF90}" --with-mpiexec="${MPIEXEC}" COPTFLAGS="${COMPILER_OPT_FLAGS}" CXXOPTFLAGS="${COMPILER_OPT_FLAGS}" FOPTFLAGS="${COMPILER_OPT_FLAGS}" "${EXTRA_OPTS[@]}" --with-c2html=0 --with-debugging=0 --with-fortran-bindings=0 --with-shared-libraries=1 --with-strict-petscerrorcode --download-bison --download-hdf5 --with-hwloc --download-metis --download-mumps --download-netcdf --download-pnetcdf --download-ptscotch --download-suitesparse --download-superlu_dist --with-zlib --download-hypre "${SYSTEM_SPECIFIC_FLAGS[@]}" --with-make-np="${BUILD_NCPUS}"
+
     make PETSC_DIR="${APP_IN_CONTAINER_PATH}/${TAG}" PETSC_ARCH=default all
 
     ### i3.) Installation repair

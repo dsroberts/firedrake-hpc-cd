@@ -8,6 +8,8 @@ jobs:
     strategy:
       matrix:
         system: [gadi, setonix]
+    concurrency:
+      group: ${{ matrix.system }}
     runs-on: ubuntu-latest
     steps:
       ### N.B this step cannot be placed in a composite action
@@ -71,6 +73,8 @@ jobs:
       matrix:
         system: [gadi, setonix]
         do_64bit: [false, true]
+    concurrency:
+      group: ${{ matrix.system }}
     runs-on: ubuntu-latest
     steps:
       ### Run this again because outputs from matrix jobs are

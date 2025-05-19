@@ -16,8 +16,8 @@ export MPI_MODULE=cray-mpich/8.1.27
 export PY_MODULE=python/3.11.6
 export SINGULARITY_MODULE=singularity/4.1.0-nohost
 
-compiler_type=cce
-compiler_version=16.0.1
+compiler_type=gcc
+compiler_version=12.2.0
 declare -a compiler_support_modules=()
 
 export COMPILER_MODULE="${compiler_type}"/"${compiler_version}"
@@ -76,8 +76,8 @@ if [[ $compiler_type == "aocc" ]]; then
     }
 fi
 
-export APPS_PREFIX="/software/projects/pawsey0821/droberts/apps"
-export MODULE_PREFIX="/software/projects/pawsey0821/droberts/modules"
+export APPS_PREFIX="/software/projects/pawsey0821/apps"
+export MODULE_PREFIX="/software/projects/pawsey0821/modules"
 export SQUASHFS_PATH="/tmp/squashfs-root/opt"
 export OVERLAY_BASE="/tmp/overlay"
 export MODULE_SUFFIX=".lua"

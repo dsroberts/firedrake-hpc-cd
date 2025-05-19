@@ -15,6 +15,9 @@ on:
           required: false
           type: boolean
 
+concurrency:
+  group: ${{ inputs.system }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
