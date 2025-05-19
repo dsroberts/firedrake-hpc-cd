@@ -40,7 +40,8 @@ pushd "${APP_NAME}"
 ### of multiple tags in a petsc release, pick the first
 repo_tags=($(git tag --points-at HEAD))
 ### Trim leading 'v'
-export TAG="${repo_tags[0]//v/}"
+#export TAG="${repo_tags[0]//v/}"
+export TAG="${repo_tags[0]}"
 ### matches short commit length on gitlab
 export GIT_COMMIT=$(git rev-parse --short=8 HEAD)
 export REPO_TAGS=()
@@ -63,7 +64,6 @@ export SQUASHFS_APP_DIR="${APP_NAME}${APP_BUILD_TAG}-${TAG}"
 ### 3.) Load dependent modules
 ### 4.) Define 'inner' function(s)
 function inner() {
-
     ### i1.) Load modules & set environment
     [[ "${EXTRA_MODULES[@]}" ]] && module load "${EXTRA_MODULES[@]}"
 
@@ -80,12 +80,15 @@ function inner() {
 
     cd "${APP_IN_CONTAINER_PATH}/${TAG}"
 
-    export MPIRUN="${MPIRUN:-mpirun}"
+    export MPIEXEC="${MPIEXEC:-mpirun}"
+    export MPICC="${MPICC:-mpicc}"
+    export MPICXX="${MPICXX:-mpicxx}"
+    export MPIF90="${MPIF90:-mpif90}"
     if [[ $(type -t get_system_specific_petsc_flags) == function ]]; then
         get_system_specific_petsc_flags
     fi
 
-    "python${PY_VERSION}" ./configure PETSC_DIR="${APP_IN_CONTAINER_PATH}/${TAG}" PETSC_ARCH=default --with-mpiexec="${MPIRUN}" --with-fc=mpif90 COPTFLAGS="${COMPILER_OPT_FLAGS}" CXXOPTFLAGS="${COMPILER_OPT_FLAGS}" FOPTFLAGS="${COMPILER_OPT_FLAGS}" "${EXTRA_OPTS[@]}" --download-suitesparse --with-cxx=mpicxx --with-hwloc-dir=/usr --with-zlib --download-pastix --with-cc=mpicc --download-mumps --download-hdf5 --download-hypre --download-netcdf --download-pnetcdf --download-superlu_dist --with-shared-libraries=1 --with-c2html=0 --with-fortran-bindings=0 --download-metis --download-ptscotch --with-debugging=0 --download-bison "${SYSTEM_SPECIFIC_FLAGS[@]}" --with-make-np="${BUILD_NCPUS}"
+    "python${PY_VERSION}" ./configure PETSC_DIR="${APP_IN_CONTAINER_PATH}/${TAG}" PETSC_ARCH=default --with-cc="${MPICC}" --with-cxx="${MPICXX}" --with-fc="${MPIF90}" --with-mpiexec="${MPIEXEC}" COPTFLAGS="${COMPILER_OPT_FLAGS}" CXXOPTFLAGS="${COMPILER_OPT_FLAGS}" FOPTFLAGS="${COMPILER_OPT_FLAGS}" "${EXTRA_OPTS[@]}" --download-suitesparse --with-hwloc-dir=/usr --with-zlib --download-pastix  --download-mumps --download-hdf5 --download-hypre --download-netcdf --download-pnetcdf --download-superlu_dist --with-shared-libraries=1 --with-c2html=0 --with-fortran-bindings=0 --download-metis --download-ptscotch --with-debugging=0 --download-bison "${SYSTEM_SPECIFIC_FLAGS[@]}" --with-make-np="${BUILD_NCPUS}"
     make PETSC_DIR="${APP_IN_CONTAINER_PATH}/${TAG}" PETSC_ARCH=default all
 
     ### i3.) Installation repair
@@ -106,15 +109,17 @@ fi
 
 ### 6.) Pre-existing build check
 if ! [[ "${FD_INSTALL_DRY_RUN}" ]]; then
-    if [[ -L "${APP_IN_CONTAINER_PATH}/${TAG}" ]]; then
+    if [[ -f "${APP_IN_CONTAINER_PATH}/${APP_NAME}-${TAG}${VERSION_TAG}.sqsh" ]]; then
         echo "This version of petsc is already installed - doing nothing"
         exit 0
     fi
 fi
 
 ### 7.) Extract source & dependent squashfs into overlay
-mkdir -p "${OVERLAY_EXTERNAL_PATH}"
-mv "${APP_NAME}" "${OVERLAY_EXTERNAL_PATH}/${TAG}"
+if [[ ! -d "${OVERLAY_EXTERNAL_PATH}/${TAG}" ]]; then
+    mkdir -p "${OVERLAY_EXTERNAL_PATH}"
+    mv "${APP_NAME}" "${OVERLAY_EXTERNAL_PATH}/${TAG}"
+fi
 
 ### 8.) Launch container build
 bind_str=""
@@ -148,7 +153,7 @@ mksquashfs squashfs-root "${APP_NAME}.sqsh" -no-fragments -no-duplicates -no-spa
 if [[ "${FD_INSTALL_DRY_RUN}" ]]; then
     mkdir -p "${BUILD_STAGE_DIR}/${APP_NAME}${APP_BUILD_TAG}"
     cp "${APP_NAME}.sqsh" "${BUILD_STAGE_DIR}/${APP_NAME}-${TAG}${VERSION_TAG}.sqsh"
-    export MODULE_FILE="${BUILD_STAGE_DIR}/${APP_NAME}${APP_BUILD_TAG}/${TAG}${MODULE_SUFFIX}"
+    export MODULE_FILE="${BUILD_STAGE_DIR}/${APP_NAME}${APP_BUILD_TAG}/${TAG}${VERSION_TAG}${MODULE_SUFFIX}"
     make_modulefiles
     exit 0
 fi

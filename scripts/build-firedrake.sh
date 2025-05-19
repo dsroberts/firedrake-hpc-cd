@@ -120,16 +120,16 @@ function inner() {
     export PETSC_ARCH=default
     export HDF5_MPI=ON
     export HDF5_DIR="${PETSC_DIR}/${PETSC_ARCH}"
-    export CC=$(which mpicc)
-    export CXX=$(which mpicxx)
-    export FC=$(which mpif90)
+    export CC="${MPICC:-mpicc}"
+    export CXX="${MPICXX:-mpicxx}"
+    export F90="${MPIF90:-mpif90}"
 
     export PYOP2_CACHE_DIR=/tmp/pyop2
     export FIREDRAKE_TSFC_KERNEL_CACHE_DIR=/tmp/tsfc
     export XDG_CACHE_HOME=/tmp/xdg
 
-    export MPIRUN="${MPIRUN:-mpirun}"
-    mpirun_path=$(which "${MPIRUN}")
+    export MPIEXEC="${MPIEXEC:-mpirun}"
+    mpirun_path=$(which "${MPIEXEC}")
     export MPI_HOME=$(realpath "${mpirun_path%/*}"/..)
     unset PYTHONPATH
 

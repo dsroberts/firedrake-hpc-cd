@@ -24,6 +24,7 @@ function copy_squash_to_overlay() {
     target="${3}"
     pushd "${EXTRACT_DIR}"
 
+    [[ -e "${target}" ]] && rm -rf "${target}"
     mkdir -p "${target%/*}"
     unsquashfs -processors 1 "${squash}"
     mv "${dir}" "${target}"

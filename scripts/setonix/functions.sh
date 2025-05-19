@@ -1,11 +1,12 @@
 function pre_container_launch_hook() {
     unset SINGULARITY_BINDPATH
     copy_dir_to_overlay "${APPS_PREFIX}/./patchelf" "${OVERLAY_EXTERNAL_PATH%/*}/"
-    copy_dir_to_overlay "${APPS_PREFIX}/./mpich" "${OVERLAY_EXTERNAL_PATH%/*}/"
+    copy_dir_to_overlay "${APPS_PREFIX}/./cmake" "${OVERLAY_EXTERNAL_PATH%/*}/"
     app_path="${OVERLAY_EXTERNAL_PATH%/*}"
     mkdir -p "${app_path%/*}/modules"
     copy_dir_to_overlay "${MODULE_PREFIX}/./patchelf.lua" "${app_path%/*}/modules"
-    ln -s /software-push-aside/setonix "${OVERLAY_BASE}/setonix"
+    copy_dir_to_overlay "${MODULE_PREFIX}/./cmake" "${app_path%/*}/modules"
+    ln -sf /software-push-aside/setonix "${OVERLAY_BASE}/setonix"
 }
 
 function __petsc_pre_container_launch_hook () {
