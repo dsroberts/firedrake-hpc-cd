@@ -46,7 +46,7 @@ else
         export RELEASE_TAG=$( git tag --points-at HEAD )
         export TAG="${RELEASE_TAG//.post*/}"
     else
-        export TAG=$(git branch)"-"$(git show --no-patch --format=%cd --date=format:%Y%m%d)
+        export TAG=$(git branch --show-current)"-"$(git show --no-patch --format=%cd --date=format:%Y%m%d)
     fi
 fi
 popd
