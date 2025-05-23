@@ -12,30 +12,22 @@ jobs:
       group: ${{ matrix.system }}
     runs-on: ubuntu-latest
     steps:
-      ### N.B this step cannot be placed in a composite action
-      ### due to secrets access
-      - name: Get system-specific variable names
-        id: get_sys_vars
-        run: |
-          tmp=${{ matrix.system }}
-          echo key_var=${tmp^^}_TESTING_KEY >> $GITHUB_OUTPUT
-          echo hkey_var=${tmp^^}_HOST_KEY >> $GITHUB_OUTPUT
-          echo user_var=${tmp^^}_USER >> $GITHUB_OUTPUT
-          echo repo_path_var=${tmp^^}_REPO_PATH >> $GITHUB_OUTPUT
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Setup ssh
         uses: ./.github/actions/setup_ssh
+        env:
+          TEST_KEY: ${{ secrets[format('{0}_TESTING_KEY',inputs.system)] }}
+          HOST_KEY: ${{ secrets[format('{0}_HOST_KEY',inputs.system)] }}
+          USER: ${{ secrets[format('{0}_USER',inputs.system)] }}
         with:
           system: ${{ matrix.system }}
-          sshkey: ${{ secrets[steps.get_sys_vars.outputs.key_var] }}
-          hostkey: ${{ secrets[steps.get_sys_vars.outputs.hkey_var] }}
-          user: ${{ secrets[steps.get_sys_vars.outputs.user_var] }}
       - name: Transfer ${{ github.event.repository.name }} repo
         uses: ./.github/actions/prepare_and_transfer_repo
+        env:
+          REPO_PATH: ${{ secrets[format('{0}_REPO_PATH',inputs.system)] }}
         with:
           system: ${{ matrix.system }}
-          repopath: ${{ secrets[steps.get_sys_vars.outputs.repo_path_var] }}
       - name: Setup Firedrake source
         uses: ./.github/actions/setup_app_source
         with:
@@ -75,44 +67,37 @@ jobs:
         do_64bit: [false, true]
     concurrency:
       group: ${{ matrix.system }}
+    env:
+      REPO_PATH: ${{ secrets[format('{0}_REPO_PATH',inputs.system)] }}
     runs-on: ubuntu-latest
     steps:
       ### Run this again because outputs from matrix jobs are
       ### a bit dodgy
-      - name: Get system-specific variable names
-        id: get_sys_vars
-        run: |
-          tmp=${{ matrix.system }}
-          echo key_var=${tmp^^}_TESTING_KEY >> $GITHUB_OUTPUT
-          echo hkey_var=${tmp^^}_HOST_KEY >> $GITHUB_OUTPUT
-          echo user_var=${tmp^^}_USER >> $GITHUB_OUTPUT
-          echo repo_path_var=${tmp^^}_REPO_PATH >> $GITHUB_OUTPUT
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Setup ssh
         uses: ./.github/actions/setup_ssh
+        env:
+          TEST_KEY: ${{ secrets[format('{0}_TESTING_KEY',inputs.system)] }}
+          HOST_KEY: ${{ secrets[format('{0}_HOST_KEY',inputs.system)] }}
+          USER: ${{ secrets[format('{0}_USER',inputs.system)] }}
         with:
           system: ${{ matrix.system }}
-          sshkey: ${{ secrets[steps.get_sys_vars.outputs.key_var] }}
-          hostkey: ${{ secrets[steps.get_sys_vars.outputs.hkey_var] }}
-          user: ${{ secrets[steps.get_sys_vars.outputs.user_var] }}
       - name: Set build variables
         uses: ./.github/actions/set_build_vars
         with:
           do_64bit: ${{ matrix.do_64bit }}
       - name: Set build commands
-        env:
-          REPO_PATH: ${{ secrets[steps.get_sys_vars.outputs.repo_path_var] }}
         run: | 
           ./.github/scripts/build_submit_command.sh ${{ matrix.system }} petsc >> $GITHUB_ENV
           ./.github/scripts/build_submit_command.sh ${{ matrix.system }} firedrake >> $GITHUB_ENV
           ./.github/scripts/build_submit_command.sh ${{ matrix.system }} gadopt >> $GITHUB_ENV
       - name: Build PETSc
         run: |
-          ssh ${{matrix.system}} "cd ${{ secrets[steps.get_sys_vars.outputs.repo_path_var] }}/scripts; ${PETSC_SUBMIT_COMMAND}"
+          ssh ${{matrix.system}} "cd $REPO_PATH/scripts; ${PETSC_SUBMIT_COMMAND}"
       - name: Build firedrake
         run: |
-          ssh ${{matrix.system}} "cd ${{ secrets[steps.get_sys_vars.outputs.repo_path_var] }}/scripts; ${FIREDRAKE_SUBMIT_COMMAND}"
+          ssh ${{matrix.system}} "cd $REPO_PATH/scripts; ${FIREDRAKE_SUBMIT_COMMAND}"
       - name: Build G-ADOPT
         run: |
-          ssh ${{matrix.system}} "cd ${{ secrets[steps.get_sys_vars.outputs.repo_path_var] }}/scripts; ${GADOPT_SUBMIT_COMMAND}"
+          ssh ${{matrix.system}} "cd $REPO_PATH/scripts; ${GADOPT_SUBMIT_COMMAND}"

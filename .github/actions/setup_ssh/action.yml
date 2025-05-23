@@ -2,12 +2,6 @@ name: Setup ssh
 inputs:
   system:
     required: true
-  sshkey:
-    required: true
-  hostkey:
-    required: true
-  user:
-    required: true
 
 runs:
   using: "composite"
@@ -23,14 +17,14 @@ runs:
       run: |
         echo ${{ steps.get_fqdn.outputs.systems }} 
         mkdir -p ~/.ssh/
-        echo "${{inputs.sshkey}}" > ~/.ssh/${{inputs.system}}.key
+        echo "$TEST_KEY" > ~/.ssh/${{inputs.system}}.key
         chmod 600 ~/.ssh/${{inputs.system}}.key
-        echo "${{inputs.hostkey}}" >> ~/.ssh/known_hosts
+        echo "$HOST_KEY" >> ~/.ssh/known_hosts
         chmod 600 ~/.ssh/known_hosts
         cat > ~/.ssh/config <<EOF
         Host ${{inputs.system}}
           Hostname ${{ steps.get_fqdn.outputs.fqdn }}
-          User ${{inputs.user}}
+          User "$USER"
           IdentityFile ~/.ssh/${{inputs.system}}.key
           ServerAliveInterval 120
         EOF

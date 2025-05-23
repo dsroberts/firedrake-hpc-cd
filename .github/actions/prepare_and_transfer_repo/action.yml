@@ -2,8 +2,6 @@ name: Prepare and transfer repository
 inputs:
   system:
     required: true
-  repopath:
-    required: true
 
 runs:
   using: "composite"
@@ -11,4 +9,4 @@ runs:
     - name: Sync repository to ${{inputs.system}}
       shell: bash
       run: |
-        rsync -avz --delete --exclude=/.git/ --exclude=/.github/ ./ ${{inputs.system}}:${{inputs.repopath}}
+        rsync -avz --delete --exclude=/.git/ --exclude=/.github/ ./ ${{inputs.system}}:"$REPO_PATH"

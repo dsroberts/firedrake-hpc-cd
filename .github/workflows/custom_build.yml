@@ -28,32 +28,25 @@ concurrency:
 
 jobs:
   build:
+    env:
+      REPO_PATH: ${{ secrets[format('{0}_REPO_PATH',inputs.system)] }}
     runs-on: ubuntu-latest
     steps:
-      ### N.B this step cannot be placed in a composite action
-      ### due to secrets access
-      - name: Get system-specific variable names
-        id: get_sys_vars
-        run: |
-          tmp=${{ inputs.system }}
-          echo key_var=${tmp^^}_TESTING_KEY >> $GITHUB_OUTPUT
-          echo hkey_var=${tmp^^}_HOST_KEY >> $GITHUB_OUTPUT
-          echo user_var=${tmp^^}_USER >> $GITHUB_OUTPUT
-          echo repo_path_var=${tmp^^}_REPO_PATH >> $GITHUB_OUTPUT
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Setup ssh
         uses: ./.github/actions/setup_ssh
+        env:
+          TEST_KEY: ${{ secrets[format('{0}_TESTING_KEY',inputs.system)] }}
+          HOST_KEY: ${{ secrets[format('{0}_HOST_KEY',inputs.system)] }}
+          USER: ${{ secrets[format('{0}_USER',inputs.system)] }}
         with:
           system: ${{ inputs.system }}
-          sshkey: ${{ secrets[steps.get_sys_vars.outputs.key_var] }}
-          hostkey: ${{ secrets[steps.get_sys_vars.outputs.hkey_var] }}
-          user: ${{ secrets[steps.get_sys_vars.outputs.user_var] }}
       - name: Transfer ${{ github.event.repository.name }} repo
         uses: ./.github/actions/prepare_and_transfer_repo
+
         with:
           system: ${{ inputs.system }}
-          repopath: ${{ secrets[steps.get_sys_vars.outputs.repo_path_var] }}
       - name: Set build variables
         uses: ./.github/actions/set_build_vars
         with:
@@ -67,11 +60,26 @@ jobs:
           app: firedrake
           repo: ${{ env.FIREDRAKE_REPO }}
           branch: ${{ inputs.build_branch }}
-      - name: Set build command
-        env:
-          REPO_PATH: ${{ secrets[steps.get_sys_vars.outputs.repo_path_var] }}
-        run: | 
+      - name: Get petsc tag
+        id: get_petsc_tag
+        run: |
+          echo petsc_tag=$( ./firedrake/scripts/firedrake-configure --no-package-manager --petscver ) >> $GITHUB_OUTPUT
+      - name: Checkout petsc
+        if: ${{ inputs.build_branch != 'master' && inputs.build_branch != 'release' }}
+        uses: ./.github/actions/setup_app_source_gitlab
+        with:
+          system: ${{ inputs.system }}
+          app: petsc
+          repo: petsc/petsc
+          branch: ${{ steps.get_petsc_tag.outputs.petsc_tag }}
+      - name: Set build commands
+        run: |
+          ./.github/scripts/build_submit_command.sh ${{ inputs.system }} petsc >> $GITHUB_ENV
           ./.github/scripts/build_submit_command.sh ${{ inputs.system }} firedrake >> $GITHUB_ENV
+      - name: Build PETSc
+        if: ${{ inputs.build_branch == 'master' || inputs.build_branch == 'release' }}
+        run: |
+          ssh ${{matrix.system}} "cd $REPO_PATH/scripts; ${PETSC_SUBMIT_COMMAND}"
       - name: Build firedrake
         run: |
-          ssh ${{inputs.system}} "cd ${{ secrets[steps.get_sys_vars.outputs.repo_path_var] }}/scripts; ${FIREDRAKE_SUBMIT_COMMAND}"
+          ssh ${{inputs.system}} "cd $REPO_PATH/scripts; ${FIREDRAKE_SUBMIT_COMMAND}"
