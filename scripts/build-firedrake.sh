@@ -45,8 +45,10 @@ else
     if [[ $( git tag --points-at HEAD ) ]]; then
         export RELEASE_TAG=$( git tag --points-at HEAD )
         export TAG="${RELEASE_TAG//.post*/}"
+        export DO_DEFAULT_MODULE=1
     else
-        export TAG=$(git branch --show-current)"-"$(git show --no-patch --format=%cd --date=format:%Y%m%d)
+        export BRANCH=$(git branch --show-current)
+        export TAG="${BRANCH}-"$(git show --no-patch --format=%cd --date=format:%Y%m%d)
     fi
 fi
 popd
@@ -142,7 +144,13 @@ function inner() {
     cd "${APP_IN_CONTAINER_PATH}/${TAG}"
     "python${PY_VERSION}" -m venv venv
     source "${APP_IN_CONTAINER_PATH}/${TAG}/venv/bin/activate"
-    pip3 install --no-binary h5py './firedrake[check]'
+    if [[ "${BUILD_BRANCH}" ]] || [[ "${BRANCH}" == "master" ]]; then
+        pip3 install "${PETSC_DIR}/src/binding/petsc4py"
+        pip3 install -r ./firedrake/requirements-build.txt
+        pip3 install wheel
+        export PIP_EXTRA_ARG="--no-build-isolation"
+    fi
+    pip3 install "${PIP_EXTRA_ARG}" --no-binary h5py './firedrake[check]'
     pip3 install jupyterlab assess gmsh imageio jupytext openpyxl pandas pyvista[all] shapely pyroltrilinos siphash24 jupyterview xarray trame_jupyter_extension pygplates ipympl matplotlib jax nbval ngsPETSc pylit pytest-split pytest-timeout pytest-xdist
 
     ### i3.) Installation repair
