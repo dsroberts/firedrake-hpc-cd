@@ -79,7 +79,7 @@ jobs:
       - name: Build PETSc
         if: ${{ inputs.build_branch == 'master' || inputs.build_branch == 'release' }}
         run: |
-          ssh ${{matrix.system}} "cd $REPO_PATH/scripts; ${PETSC_SUBMIT_COMMAND}"
+          ssh ${{inputs.system}} "cd $REPO_PATH/scripts; ${PETSC_SUBMIT_COMMAND}"
       - name: Build firedrake
         run: |
           ssh ${{inputs.system}} "cd $REPO_PATH/scripts; ${FIREDRAKE_SUBMIT_COMMAND}"
