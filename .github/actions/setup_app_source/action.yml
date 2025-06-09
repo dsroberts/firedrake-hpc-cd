@@ -36,7 +36,7 @@ runs:
       shell: bash
       run: |
         pushd ${{ inputs.app }}
-        git checkout $( git describe --tags --abbrev=0 )
+        git checkout $( git describe --tags $( git rev-list --tags --max-count=1 ) )
         git status
         popd
     - name: Delete post-checkout git lfs hook
