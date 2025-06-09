@@ -135,11 +135,6 @@ function inner() {
     export MPI_HOME=$(realpath "${mpirun_path%/*}"/..)
     unset PYTHONPATH
 
-    ### TEMP Cython workaround
-    echo 'Cython<3.1' > "${EXTRACT_DIR}/constraints.txt"
-    export PIP_CONSTRAINT="${EXTRACT_DIR}/constraints.txt"
-    ### END TEMP
-
     ### i2.) Install
     cd "${APP_IN_CONTAINER_PATH}/${TAG}"
     "python${PY_VERSION}" -m venv venv
