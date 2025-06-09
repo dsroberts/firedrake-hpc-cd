@@ -68,7 +68,7 @@ jobs:
     concurrency:
       group: ${{ matrix.system }}
     env:
-      REPO_PATH: ${{ secrets[format('{0}_REPO_PATH',inputs.system)] }}
+      REPO_PATH: ${{ secrets[format('{0}_REPO_PATH',matrix.system)] }}
     runs-on: ubuntu-latest
     steps:
       ### Run this again because outputs from matrix jobs are
@@ -78,9 +78,9 @@ jobs:
       - name: Setup ssh
         uses: ./.github/actions/setup_ssh
         env:
-          TEST_KEY: ${{ secrets[format('{0}_TESTING_KEY',inputs.system)] }}
-          HOST_KEY: ${{ secrets[format('{0}_HOST_KEY',inputs.system)] }}
-          USER: ${{ secrets[format('{0}_USER',inputs.system)] }}
+          TEST_KEY: ${{ secrets[format('{0}_TESTING_KEY',matrix.system)] }}
+          HOST_KEY: ${{ secrets[format('{0}_HOST_KEY',matrix.system)] }}
+          USER: ${{ secrets[format('{0}_USER',matrix.system)] }}
         with:
           system: ${{ matrix.system }}
       - name: Set build variables
