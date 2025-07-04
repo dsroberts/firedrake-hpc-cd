@@ -12,7 +12,7 @@
 ###                     |   bind_dirs                     |   EXTERNAL_COMMANDS_TO_INCLUDE
 ###                     |                                 |   COMMON_MODULE_EXT
 
-export MPI_MODULE=openmpi/5.0.5
+export MPI_MODULE=openmpi/4.0.7
 ### Must have numpy - no reason not to use NCI-provided modules
 export PY_MODULE=python3/3.11.7
 export SINGULARITY_MODULE=singularity

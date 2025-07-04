@@ -8,6 +8,16 @@ set -e
 ### Use github action to checkout out firedrake repo, tar it up and
 ### copy to HPC system
 ###
+### Runtime variables:
+###   DO_64BIT:
+###     When set, build firedrake against the 64-bit integer installation of petsc
+###   FD_INSTALL_DRY_RUN:
+###     When set, do not check if the version of firedrake being installed exists, and store
+###     the resulting squashfs in ${BUILD_STAGE_DIR}
+###   FD_INSTALL_PETSC_SQUASHFS_OVERRIDE:
+###     When set, use the petsc squashfs found at this path instead of the one belonging
+###     to the default petsc module
+###
 ### ==== SECTIONS =====
 ###
 ### 1.) Intialisation
@@ -42,8 +52,8 @@ if [[ "${BUILD_BRANCH}" ]]; then
 else
     ### If we're told nothing, check if we're on a tag and build that, otherwise
     ### tag with whatever branch we're on and the date.
-    if [[ $( git tag --points-at HEAD ) ]]; then
-        export RELEASE_TAG=$( git tag --points-at HEAD )
+    if [[ $(git tag --points-at HEAD) ]]; then
+        export RELEASE_TAG=$(git tag --points-at HEAD)
         export TAG="${RELEASE_TAG//.post*/}"
         export DO_DEFAULT_MODULE=1
     else
@@ -147,6 +157,7 @@ function inner() {
     fi
     pip3 install ${PIP_EXTRA_ARG} --no-binary h5py './firedrake[check]'
     pip3 install jupyterlab assess gmsh imageio jupytext openpyxl pandas pyvista[all] shapely pyroltrilinos siphash24 jupyterview xarray trame_jupyter_extension pygplates ipympl matplotlib jax nbval ngsPETSc pylit pytest-split pytest-timeout pytest-xdist
+    pip3 install git+https://github.com/g-adopt/gadopt_hpc_helper
 
     ### i3.) Installation repair
     if [[ $(type -t __firedrake_post_build_in_container_hook) == function ]]; then
@@ -185,7 +196,7 @@ if ! [[ "${FD_INSTALL_DRY_RUN}" ]]; then
     if [[ -L "${APP_IN_CONTAINER_PATH}/${TAG}" ]]; then
         ### I wish this wasn't the only way to check the firedrake version
         export DO_UPDATE=1
-        ver=$( singularity -s exec --bind "${BIND_STR}" --overlay="${APP_IN_CONTAINER_PATH}/${APP_NAME}-${TAG}.sqsh" "${BUILD_CONTAINER_PATH}/base.sif" grep '^version' "/opt/${APP_NAME}-${TAG}/${APP_NAME}/pyproject.toml" )
+        ver=$(singularity -s exec --bind "${BIND_STR}" --overlay="${APP_IN_CONTAINER_PATH}/${APP_NAME}-${TAG}.sqsh" "${BUILD_CONTAINER_PATH}/base.sif" grep '^version' "/opt/${APP_NAME}-${TAG}/${APP_NAME}/pyproject.toml")
         ver="${ver##* }"
         installed_version="${ver//\"/}"
         if [[ "${installed_version}" == "${RELEASE_TAG}" ]]; then
@@ -196,7 +207,12 @@ if ! [[ "${FD_INSTALL_DRY_RUN}" ]]; then
 fi
 
 ### 7.) Extract source & dependent squashfs into overlay
-copy_squash_to_overlay "${APPS_PREFIX}/petsc${APP_BUILD_TAG}/petsc-${PETSC_TAG}.sqsh" "${SQUASHFS_PATH}/petsc${APP_BUILD_TAG}-${PETSC_DIR_SUFFIX}" "${OVERLAY_EXTERNAL_PATH%/*}/petsc${APP_BUILD_TAG}/${PETSC_DIR_SUFFIX}"
+if [[ "${FD_INSTALL_PETSC_SQUASHFS_OVERRIDE}" ]]; then
+    export PETSC_SQUASHFS="${FD_INSTALL_PETSC_SQUASHFS_OVERRIDE}"
+else
+    export PETSC_SQUASHFS="${APPS_PREFIX}/petsc${APP_BUILD_TAG}/petsc-${PETSC_TAG}.sqsh"
+fi
+copy_squash_to_overlay "${PETSC_SQUASHFS}" "${SQUASHFS_PATH}/petsc${APP_BUILD_TAG}-${PETSC_DIR_SUFFIX}" "${OVERLAY_EXTERNAL_PATH%/*}/petsc${APP_BUILD_TAG}/${PETSC_DIR_SUFFIX}"
 
 mkdir -p "${OVERLAY_EXTERNAL_PATH}/${TAG}"
 mv "${APP_NAME}" "${OVERLAY_EXTERNAL_PATH}/${TAG}"
