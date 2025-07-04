@@ -41,9 +41,8 @@ pushd "${APP_NAME}"
 repo_tags=($(git tag --points-at HEAD))
 ### Trim leading 'v'
 export TAG="${repo_tags[0]//v/}"
-### matches short commit length on gitlab
-export GIT_COMMIT=$(git rev-parse --short=8 HEAD)
-export REPO_TAGS=()
+### Always do default module for petsc
+export DO_DEFAULT_MODULE=1
 popd
 
 export APP_BUILD_TAG=""
