@@ -6,7 +6,10 @@ Bootstrap: scratch
         mkdir -p ${SINGULARITY_ROOTFS}/opt/amdgpu
         mkdir -p ${SINGULARITY_ROOTFS}/opt/cray
         mkdir -p ${SINGULARITY_ROOTFS}/opt/modulefiles
+        ln -s /etc/alternatives/rocm ${SINGULARITY_ROOTFS}/opt/rocm
+        mkdir -p ${SINGULARITY_ROOTFS}/opt/rocm-6.3.0
         mkdir -p ${SINGULARITY_ROOTFS}/opt/pawsey
+        mkdir -p ${SINGULARITY_ROOTFS}/opt/xpmem
 
         ### Mount points for various bits of the image
         mkdir -p ${SINGULARITY_ROOTFS}/bin
