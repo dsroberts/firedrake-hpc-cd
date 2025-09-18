@@ -65,7 +65,7 @@ jobs:
         run: |
           echo petsc_tag=$( ./firedrake/scripts/firedrake-configure --no-package-manager --petscver ) >> $GITHUB_OUTPUT
       - name: Checkout petsc
-        if: ${{ inputs.build_branch == 'master' || inputs.build_branch == 'release' }}
+        if: ${{ inputs.build_branch == 'main' || inputs.build_branch == 'release' }}
         uses: ./.github/actions/setup_app_source_gitlab
         with:
           system: ${{ inputs.system }}
@@ -77,7 +77,7 @@ jobs:
           ./.github/scripts/build_submit_command.sh ${{ inputs.system }} petsc >> $GITHUB_ENV
           ./.github/scripts/build_submit_command.sh ${{ inputs.system }} firedrake >> $GITHUB_ENV
       - name: Build PETSc
-        if: ${{ inputs.build_branch == 'master' || inputs.build_branch == 'release' }}
+        if: ${{ inputs.build_branch == 'main' || inputs.build_branch == 'release' }}
         run: |
           ssh ${{inputs.system}} "cd $REPO_PATH/scripts; ${PETSC_SUBMIT_COMMAND}"
       - name: Build firedrake
