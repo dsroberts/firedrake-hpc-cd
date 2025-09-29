@@ -12,7 +12,7 @@
 ###                     |   bind_dirs                     |   EXTERNAL_COMMANDS_TO_INCLUDE
 ###                     |                                 |   COMMON_MODULE_EXT
 
-export MPI_MODULE=openmpi/4.0.7
+#export MPI_MODULE="openmpi/4.0.7"
 ### Must have numpy - no reason not to use NCI-provided modules
 export PY_MODULE=python3/3.11.7
 export SINGULARITY_MODULE=singularity
@@ -59,8 +59,8 @@ export PY_VERSION="${py_ver%.*}"
 
 [[ "${PBS_JOBFS}" ]] && export EXTRACT_DIR="${PBS_JOBFS}" || export EXTRACT_DIR="${TMPDIR}"
 export BUILD_NCPUS="${PBS_NCPUS}"
-export APPS_PREFIX=/g/data/fp50/apps
-export MODULE_PREFIX=/g/data/fp50/modules
+export APPS_PREFIX=/g/data/fp50/admin/testing/apps
+export MODULE_PREFIX=/g/data/fp50/admin/testing/modules
 export SQUASHFS_PATH="${EXTRACT_DIR}/squashfs-root/opt"
 export OVERLAY_BASE="${EXTRACT_DIR}/overlay"
 ### N.B. CONTAINER_PATH is set by petsc module, so we need a different
@@ -69,6 +69,8 @@ export OVERLAY_BASE="${EXTRACT_DIR}/overlay"
 export BUILD_CONTAINER_PATH="${APPS_PREFIX}/petsc/etc"
 export BUILD_STAGE_DIR=/scratch/fp50/staging
 export WRITERS_GROUP=xd2
+
+export APP_REAL_INSTALL_DIR="/tmp"
 
 ### Otherwise cmake can't find MPI when building libsupermesh via. pip
 export CMAKE_ARGS='-DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_Fortran_COMPILER=mpif90'

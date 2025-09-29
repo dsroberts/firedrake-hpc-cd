@@ -35,31 +35,6 @@ function __firedrake_post_build_in_container_hook() {
         patchelf --force-rpath --set-rpath "${APP_IN_CONTAINER_PATH}/${TAG}/venv/lib" "venv/bin/${py}"
     done
     module unload patchelf
-
-    ###    d.) Link in entire OpenMPI build - <Firedrake specific>
-    module load "${MPI_MODULE}"
-    for i in $(find "${OPENMPI_BASE}/" ! -type d); do
-        f="${i//$OPENMPI_BASE\//}"
-        mkdir -p "venv/${f%/*}"
-        ln -sf ${i} "venv/${f}"
-    done
-    rm -rf venv/lib/{GNU,nvidia} venv/include/{GNU,nvidia}
-    mv venv/lib/Intel/* venv/lib
-    mv venv/include/Intel/* venv/include
-    rmdir venv/{lib,include}/Intel
-
-    ###    e.) Link in entire PRRTE build
-    if [[ "${OMPI_PRTERUN}" ]]; then
-        prte_path=${OMPI_PRTERUN//\/bin\/prterun/}
-        export PRTE_MODULE=${prte_path//\/apps\//}
-        module load "${PRTE_MODULE}"
-        for i in $(find "${PRRTE_BASE}/" ! -type d); do
-            f="${i//$PRRTE_BASE\//}"
-            mkdir -p "venv/${f%/*}"
-            ln -sf ${i} "venv/${f}"
-        done
-    fi
-
 }
 
 function __firedrake_extra_squashfs_contents() {
