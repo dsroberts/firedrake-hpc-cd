@@ -50,6 +50,11 @@ export MODULE_FILE="${MODULE_PREFIX}/${APP_NAME}${APP_BUILD_TAG}${MODULE_SUFFIX}
 
 pip3 install --target "${APP_IN_CONTAINER_PATH}/gadopt" --upgrade --no-deps .
 
+### Install gadopt_hpc_helper in a separate location
+export HPC_HELPER_PATH="${APPS_PREFIX}/gadopt_hpc_helper"
+pip3 install --target "${HPC_HELPER_PATH}" --no-deps git+https://github.com/g-adopt/gadopt_hpc_helper
+
 tar -czf "${APP_IN_CONTAINER_PATH}"/gadopt/demos.tgz demos
 
 copy_and_replace "${here}/../module/${FD_SYSTEM}/${APP_NAME}-base" "${MODULE_FILE}" APP_BUILD_TAG FIREDRAKE_TAG APP_IN_CONTAINER_PATH
+copy_and_replace "${here}/../module/${FD_SYSTEM}/${APP_NAME}-hpc-helper-base" "${MODULE_PREFIX}/${APP_NAME}_hpc_helper" HPC_HELPER_PATH

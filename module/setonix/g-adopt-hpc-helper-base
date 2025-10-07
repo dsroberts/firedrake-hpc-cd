@@ -1,0 +1,5 @@
+local prefix = "__HPC_HELPER_PATH__"
+
+prepend_path("PATH",pathJoin(prefix,"gadopt_hpc_helper/bin"))
+prepend_path("PYTHONPATH",pathJoin(prefix,"gadopt_hpc_helper"))
+setenv("GADOPT_HPC_HELPER_BASE",pathJoin(prefix,"gadopt"))

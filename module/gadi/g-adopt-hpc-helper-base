@@ -1,0 +1,5 @@
+#%Module1.0
+
+prepend-path PATH __HPC_HELPER_PATH__/gadopt_hpc_helper/bin
+prepend-path PYTHONPATH __HPC_HELPER_PATH__/gadopt_hpc_helper
+setenv GADOPT_HPC_HELPER_BASE __HPC_HELPER_PATH__/gadopt_hpc_helper
