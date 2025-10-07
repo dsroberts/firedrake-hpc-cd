@@ -12,12 +12,12 @@
 ###                     |   bind_dirs                     |   EXTERNAL_COMMANDS_TO_INCLUDE
 ###                     |                                 |   COMMON_MODULE_EXT
 
-export MPI_MODULE=cray-mpich/8.1.31
+export MPI_MODULE=cray-mpich/8.1.32
 export PY_MODULE=python/3.11.6
 export SINGULARITY_MODULE=singularity/4.1.0-nohost
 
 compiler_type=gcc-native
-compiler_version=13.2
+compiler_version=14.2
 declare -a compiler_support_modules=()
 
 export COMPILER_MODULE="${compiler_type}"/"${compiler_version}"
@@ -117,12 +117,12 @@ export BUILD_NCPUS="${SLURM_NPROCS}"
 
 ### Limited bits from pawseyenv module to get packages found
 export LMOD_PACKAGE_PATH="/software/setonix/lmod-extras"
-export MYSOFTWARE="/software/projects/${PAWSEY_PROJECT}/${USER}"
-declare -a MODULE_USE_PATHS=("${MODULE_PREFIX}" "/software/setonix/2025.03/pawsey/modules")
+export MYSOFTWARE="/software/projects/pawsey0821/${USER}"
+declare -a MODULE_USE_PATHS=("${MODULE_PREFIX}" "/software/setonix/2025.08/pawsey/modules")
 export MODULE_USE_PATHS
 
 ### Need compiler module loaded ahead of time to resolve cmake and autoconf
-declare -a EXTRA_MODULES=("${PRGENV_MODULE}" "${COMPILER_MODULE}" "libfabric/1.15.2.0" "craype-x86-milan" )
+declare -a EXTRA_MODULES=("${PRGENV_MODULE}" "${COMPILER_MODULE}" "libfabric/1.22.0" "craype-x86-milan" )
 EXTRA_MODULES+=( "${compiler_support_modules[@]}" "cmake/3.31.6" )
 export EXTRA_MODULES
 
@@ -130,8 +130,3 @@ declare -a EXTERNAL_COMMANDS_TO_INCLUDE=( "make" )
 export EXTERNAL_COMMANDS_TO_INCLUDE
 
 declare -a bind_dirs=("/opt/admin-pe" "/opt/AMD" "/opt/amdgpu" "/opt/cray" "/opt/modulefiles" "/opt/pawsey" "/opt/xpmem" "/bin" "/boot" "/etc" "/lib" "/lib64" "/local" "/pe" "/ram" "/rootfs.rw" "/root_ro" "/run" "/scratch" "/usr" "/sys/fs/cgroup" "/var/lib/sss" "/var/run/munge" "/var/lib/ca-certificates")
-
-### Pin mpi4py
-echo "mpi4py<4.1.0" > /tmp/pip-constraint.txt
-echo "Cython<3.1"  >> /tmp/pip-constraint.txt
-export PIP_CONSTRAINT=/tmp/pip-constraint.txt
