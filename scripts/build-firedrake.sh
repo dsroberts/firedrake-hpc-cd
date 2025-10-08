@@ -157,6 +157,7 @@ function inner() {
     fi
     pip3 install ${PIP_EXTRA_ARG} --no-binary h5py './firedrake[check]'
     pip3 install jupyterlab assess gmsh imageio jupytext openpyxl pandas pyvista[all] shapely pyroltrilinos siphash24 jupyterview xarray trame_jupyter_extension pygplates ipympl matplotlib jax nbval ngsPETSc pylit pytest-split pytest-timeout pytest-xdist python-dateutil
+    pip3 install git+https://github.com/mesh-adaptation/animate.git
 
     ### i3.) Installation repair
     if [[ $(type -t __firedrake_post_build_in_container_hook) == function ]]; then
