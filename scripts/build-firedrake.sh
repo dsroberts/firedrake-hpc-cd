@@ -155,8 +155,15 @@ function inner() {
         pip3 install wheel
         export PIP_EXTRA_ARG="--no-build-isolation"
     fi
-    pip3 install ${PIP_EXTRA_ARG} --no-binary h5py './firedrake[check]'
-    pip3 install jupyterlab assess gmsh imageio jupytext openpyxl pandas pyvista[all] shapely pyroltrilinos siphash24 jupyterview xarray trame_jupyter_extension pygplates ipympl matplotlib jax nbval ngsPETSc pylit pytest-split pytest-timeout pytest-xdist
+    ### Cannot rely on compiler wrappers to correctly set RPATH
+    ### for compiled petsc4py lib.
+    export LD_LIBRARY_PATH_ORIG="${LD_LIBRARY_PATH}"
+    export LD_LIBRARY_PATH="${PETSC_DIR}/${PETSC_ARCH}/lib:${LD_LIBRARY_PATH}"
+    pip3 install ${PIP_EXTRA_ARG} --no-binary h5py,mpi4py './firedrake[check]'
+    ### Reset LD_LIBRARY_PATH so that the installation repair can correctly
+    ### set petsc4py lib RPATH
+    export LD_LIBRARY_PATH="${LD_LIBRARY_PATH_ORIG}"
+    pip3 install jupyterlab assess gmsh imageio jupytext openpyxl pandas pyvista[all] shapely pyroltrilinos siphash24 jupyterview xarray trame_jupyter_extension pygplates ipympl matplotlib jax nbval ngsPETSc pylit pytest-split pytest-timeout pytest-xdist python-dateutil
     pip3 install git+https://github.com/g-adopt/gadopt_hpc_helper
 
     ### i3.) Installation repair

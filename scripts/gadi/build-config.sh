@@ -76,6 +76,9 @@ export APP_REAL_INSTALL_DIR="/tmp"
 export CMAKE_ARGS='-DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_Fortran_COMPILER=mpif90'
 ### System ninja install is too old for Fortran
 export CMAKE_GENERATOR='Unix Makefiles'
+### Force mpi4py to use weak symbols - resolves an issue where mpi4py is expecting ompi_mpi_short_float in libmpi.so
+### but this symbol is declared private in NCI builds
+export MPI4PY_BUILD_MPIABI=1
 
 ### pnetcdf will not compile against oneAPI fortran compiler
 ### with system autoconf - see https://community.intel.com/t5/Intel-Fortran-Compiler/ifx-2021-1-beta04-HPC-Toolkit-build-error-with-loopopt/td-p/1184181

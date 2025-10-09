@@ -39,7 +39,7 @@ function copy_dir_to_overlay() {
     target="${2}"
 
     mkdir -p "${target%/*}"
-    rsync --archive --verbose --partial --progress --one-file-system --itemize-changes --hard-links --acls --relative "${dir}" "${target}"
+    rsync --archive --partial --info=stats2 --one-file-system --hard-links --acls --relative "${dir}" "${target}"
 }
 
 ### Basic perms function - overwrite
