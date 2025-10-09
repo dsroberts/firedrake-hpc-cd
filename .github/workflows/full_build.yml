@@ -2,6 +2,11 @@ name: Build full Firedrake stack on all systems
 
 on:
   workflow_dispatch:
+    inputs:
+      cherry_pick:
+        description: commit SHA to cherry-pick onto latest Firedrake release for this build
+        required: false
+        type: string
 
 jobs:
   prepare:
@@ -37,6 +42,7 @@ jobs:
           branch: ''
           depth: 0
           fetch_latest_tag: true
+          cherry_pick: ${{ inputs.cherry_pick }}
       - name: Get petsc tag
         id: get_petsc_tag
         run: |

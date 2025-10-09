@@ -14,6 +14,10 @@ on:
           description: "Build petsc/firedrake with 64-bit indices?"
           required: false
           type: boolean
+        cherry_pick:
+          description: commit SHA to cherry-pick onto latest Firedrake release for this build
+          required: false
+          type: string
 
 concurrency:
   group: ${{ inputs.system }}
@@ -47,6 +51,7 @@ jobs:
           branch: ''
           depth: 0
           fetch_latest_tag: true
+          cherry_pick: ${{ inputs.cherry_pick }}
       - name: Get petsc tag
         id: get_petsc_tag
         run: |

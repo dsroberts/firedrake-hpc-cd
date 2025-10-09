@@ -12,6 +12,8 @@ inputs:
     required: false
   fetch_latest_tag:
     required: false
+  cherry_pick:
+    required: false
 
 runs:
   using: "composite"
@@ -38,6 +40,13 @@ runs:
         pushd ${{ inputs.app }}
         git checkout $( git describe --tags $( git rev-list --tags --max-count=1 ) )
         git status
+        popd
+    - name: Cherry pick commits from other branch
+      if: ${{ inputs.cherry_pick != '' }}
+      shell: bash
+      run: |
+        pushd ${{ inputs.app }}
+        git cherry-pick ${{ inputs.cherry_pick }} -X theirs --no-commit --
         popd
     - name: Delete post-checkout git lfs hook
       shell: bash
