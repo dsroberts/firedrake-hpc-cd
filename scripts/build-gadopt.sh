@@ -60,4 +60,4 @@ sed -i  '1 s:^.*$:'#\!${PY3_WRAPPER}':' "${HPC_HELPER_PATH}/bin/gadopt_hpcrun"
 tar -czf "${APP_IN_CONTAINER_PATH}"/gadopt/demos.tgz demos
 
 copy_and_replace "${here}/../module/${FD_SYSTEM}/${APP_NAME}-base" "${MODULE_FILE}" APP_BUILD_TAG FIREDRAKE_TAG APP_IN_CONTAINER_PATH
-copy_and_replace "${here}/../module/${FD_SYSTEM}/${APP_NAME}-hpc-helper-base" "${MODULE_PREFIX}/gadopt_hpc_helper" HPC_HELPER_PATH
+copy_and_replace "${here}/../module/${FD_SYSTEM}/${APP_NAME}-hpc-helper-base" "${MODULE_PREFIX}/gadopt_hpc_helper${MODULE_SUFFIX}" HPC_HELPER_PATH
