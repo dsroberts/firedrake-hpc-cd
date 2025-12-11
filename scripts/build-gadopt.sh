@@ -49,6 +49,7 @@ export APP_IN_CONTAINER_PATH="${APPS_PREFIX}/firedrake${APP_BUILD_TAG}"
 export MODULE_FILE="${MODULE_PREFIX}/${APP_NAME}${APP_BUILD_TAG}${MODULE_SUFFIX}"
 
 pip3 install --target "${APP_IN_CONTAINER_PATH}/gadopt" --upgrade --no-deps .
+pip3 install --target "${APP_IN_CONTAINER_PATH}/gadopt" --upgrade --no-deps git+https://github.com/g-adopt/gadopt-demo-utils.git
 
 ### Install gadopt_hpc_helper in a separate location
 export HPC_HELPER_PATH="${APPS_PREFIX}/gadopt_hpc_helper"
