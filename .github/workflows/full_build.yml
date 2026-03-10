@@ -60,7 +60,7 @@ jobs:
           system: ${{ matrix.system }}
           app: g-adopt
           repo: g-adopt/g-adopt
-          branch: master
+          branch: main
           depth: 0
           fetch_latest_tag: true
 

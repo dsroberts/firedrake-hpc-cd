@@ -150,6 +150,8 @@ function inner() {
     "python${PY_VERSION}" -m venv venv
     source "${APP_IN_CONTAINER_PATH}/${TAG}/venv/bin/activate"
     if [[ "${BUILD_BRANCH}" ]] || [[ "${BRANCH}" == "main" ]]; then
+        echo 'setuptools<81' > /tmp/constraints.txt
+        export PIP_CONSTRAINT=/tmp/constraints.txt	
         pip3 install "${PETSC_DIR}/src/binding/petsc4py"
         pip3 install -r ./firedrake/requirements-build.txt
         pip3 install wheel
