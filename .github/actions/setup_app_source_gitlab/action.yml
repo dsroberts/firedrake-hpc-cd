@@ -1,4 +1,5 @@
 name: Prepare and transfer repository from gitlab
+description: Prepare a repository from gitlab and transfer to an HPC system
 inputs:
   system:
     required: true

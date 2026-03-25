@@ -1,4 +1,5 @@
 name: Prepare and transfer repository
+description: Prepare this repository and transfer to an HPC system
 inputs:
   system:
     required: true

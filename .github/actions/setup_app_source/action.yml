@@ -1,4 +1,5 @@
 name: Prepare and transfer repository
+description: Prepare a repository from github and transfer to an HPC system
 inputs:
   system:
     required: true
@@ -25,7 +26,7 @@ runs:
         source scripts/${{inputs.system}}/build-config.sh
         echo build_stage_dir=$BUILD_STAGE_DIR >> $GITHUB_OUTPUT
     - name: Checkout ${{ inputs.app }}
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         repository: ${{ inputs.repo }}
         ref: ${{ inputs.branch }}

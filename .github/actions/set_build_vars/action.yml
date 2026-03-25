@@ -1,4 +1,5 @@
-name: Prepare and transfer repository
+name: Set build variables
+description: Set up environment variables required for build batch jobs
 inputs:
   do_64bit:
     required: false

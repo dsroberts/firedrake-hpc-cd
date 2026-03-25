@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Setup ssh
         uses: ./.github/actions/setup_ssh
         env:
@@ -63,7 +63,11 @@ jobs:
       - name: Get petsc tag
         id: get_petsc_tag
         run: |
-          echo petsc_tag=$( ./firedrake/scripts/firedrake-configure --no-package-manager --petscver ) >> $GITHUB_OUTPUT
+          if [[ ${{inputs.build_branch}} == "release" ]]; then
+            echo petsc_tag=$( ./firedrake/scripts/firedrake-configure --no-package-manager --petscver ) >> $GITHUB_OUTPUT
+          else
+            echo petsc_tag="main" >> $GITHUB_OUTPUT
+          fi
       - name: Checkout petsc
         if: ${{ inputs.build_branch == 'main' || inputs.build_branch == 'release' }}
         uses: ./.github/actions/setup_app_source_gitlab

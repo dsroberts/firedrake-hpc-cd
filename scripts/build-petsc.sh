@@ -39,10 +39,15 @@ pushd "${APP_NAME}"
 ### Tag with upstream version - in the unlikely event
 ### of multiple tags in a petsc release, pick the first
 repo_tags=($(git tag --points-at HEAD))
-### Trim leading 'v'
-export TAG="${repo_tags[0]//v/}"
-### Always do default module for petsc
-export DO_DEFAULT_MODULE=1
+if [[ ${#repo_tags[@]} == 0 ]]; then
+    export branch=$(git branch --show-current)
+    export TAG="${branch}-"$(git show --no-patch --format=%cd --date=format:%Y%m%d)
+else
+    ### Trim leading 'v'
+    export TAG="${repo_tags[0]//v/}"
+    ### Always do default module for petsc
+    export DO_DEFAULT_MODULE=1
+fi
 popd
 
 export APP_BUILD_TAG=""

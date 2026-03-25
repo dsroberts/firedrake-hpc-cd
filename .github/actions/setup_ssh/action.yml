@@ -1,4 +1,5 @@
 name: Setup ssh
+description: Set up ssh on actions worker
 inputs:
   system:
     required: true
