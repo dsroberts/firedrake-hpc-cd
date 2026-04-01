@@ -25,7 +25,7 @@ runs:
         git init ${{ inputs.app }}
         pushd ${{ inputs.app }}
         git remote add origin https://gitlab.com/${{ inputs.repo }}.git
-        git -c protocol.version=2 fetch --prune --no-recurse-submodules --depth=1 origin +refs/tags/${{ inputs.branch }}:refs/tags/${{ inputs.branch }}
+        git -c protocol.version=2 fetch --prune --no-recurse-submodules --depth=1 origin +refs/heads/${{inputs.branch}}*:refs/remotes/origin/${{inputs.branch}}* +refs/tags/${{inputs.branch}}*:refs/tags/${{inputs.branch}}*
         git checkout ${{ inputs.branch }}
         popd
     - name: Package ${{ inputs.app }}
