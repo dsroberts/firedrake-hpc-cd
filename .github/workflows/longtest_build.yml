@@ -3,6 +3,8 @@ name: Build PETSc and Firedrake in preparation for running G-ADOPT longtests
 on:
   schedule:
     - cron: "5 19 * * 0"
+  
+  workflow_dispatch:
 
 jobs:
   run_fortnightly:
@@ -10,7 +12,13 @@ jobs:
     outputs:
       skip: ${{ steps.check_date.outputs.skip }}
     steps:
+      - name: Always run tests on workflow dispatch
+        id: early_exit
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run:
+          echo skip=true >> "$GITHUB_OUTPUT"
       - name: Check date
+        if: ${{ steps.early_exit.outputs.skip != 'true' }}
         id: check_date
         run: |
           day=$( date +%_d )
@@ -63,7 +71,7 @@ jobs:
         id: scrape_settings
         shell: bash
         run: |
-          source scripts/${{inputs.system}}/build-config.sh
+          source scripts/gadi/build-config.sh
           echo apps_prefix=$APPS_PREFIX >> $GITHUB_OUTPUT
           echo module_prefix=$MODULE_PREFIX >> $GITHUB_OUTPUT
       - name: Clean old longtest builds
