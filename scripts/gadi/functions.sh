@@ -1,8 +1,8 @@
 function fix_apps_perms() {
     for dir in "$@"; do
-        setfacl -R -b "${dir}"
-        chmod -R g=u-w "${dir}"
-        setfacl -R -m g::rX,g:${WRITERS_GROUP}:rwX,d:g::rX,d:g:${WRITERS_GROUP}:rwX "${dir}"
+        setfacl -R -b "${dir}" || true
+        chmod -R g=u-w "${dir}" || true
+        setfacl -R -m g::rX,g:${WRITERS_GROUP}:rwX,d:g::rX,d:g:${WRITERS_GROUP}:rwX "${dir}" || true
     done
 }
 

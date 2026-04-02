@@ -45,7 +45,7 @@ function copy_dir_to_overlay() {
 ### Basic perms function - overwrite
 function fix_apps_perms() {
     for dir in "$@"; do
-        chmod -R g=u-w "${dir}"
+        chmod -R g=u-w "${dir}" || true
     done
 }
 
