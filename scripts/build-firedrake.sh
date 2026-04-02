@@ -88,9 +88,13 @@ if [[ -d "${MODULE_PREFIX}/petsc" ]]; then
         if [[ $(type -t __firedrake_pre_petsc_version_check) == function ]]; then
             __firedrake_pre_petsc_version_check
         fi
-        petsc_mod=petsc"${APP_BUILD_TAG}"
-        if [[ "${VERSION_TAG}" ]]; then
-            petsc_mod+="/${VERSION_TAG:1}"
+        if [[ "${INPUT_PETSC_MODULE}" ]]; then
+            petsc_mod="${INPUT_PETSC_MODULE}"
+        else
+            petsc_mod=petsc"${APP_BUILD_TAG}"
+            if [[ "${VERSION_TAG}" ]]; then
+                petsc_mod+="/${VERSION_TAG:1}"
+            fi
         fi
         module use "${MODULE_PREFIX}"
         module load "${petsc_mod}"

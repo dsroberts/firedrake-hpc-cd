@@ -74,6 +74,14 @@ jobs:
           source scripts/gadi/build-config.sh
           echo apps_prefix=$APPS_PREFIX >> $GITHUB_OUTPUT
           echo module_prefix=$MODULE_PREFIX >> $GITHUB_OUTPUT
+          echo version_tag=$VERSION_TAG >> $GITHUB_OUTPUT
+      - name: Get petsc module name
+        run: |
+          pushd petsc
+          export branch=$(git branch --show-current)
+          export TAG="${branch}-$(git show --no-patch --format=%cd --date=format:%Y%m%d)"
+          popd
+          echo "QSUB_EXTRA_VARS=,INPUT_PETSC_MODULE=petsc/${TAG}${{ steps.scrape_settings.outputs.version_tag }}" >> $GITHUB_ENV
       - name: Clean old longtest builds
         run: |
           export DATESTAMP=$( date -d @$(( $( date +%s ) - 60*86400 )) +%F )
