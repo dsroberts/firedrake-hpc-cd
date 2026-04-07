@@ -138,6 +138,11 @@ function make_modulefiles() {
         if [[ "${VERSION_TAG}" ]]; then
             echo module-version "${APP_NAME}${APP_BUILD_TAG}/${TAG}${VERSION_TAG}" "${VERSION_TAG:1}" >>"${MODULE_FILE%/*}/.modulerc"
         fi
+        if [[ "${TAG::4}" == "main" ]]; then
+            ### Replace existing 'main' alias
+            sed -i '/main$/d' "${MODULE_FILE%/*}/.modulerc"
+            echo module-version "${APP_NAME}${APP_BUILD_TAG}/${TAG}${VERSION_TAG}" "main${APP_BUILD_TAG}" >>"${MODULE_FILE%/*}/.modulerc"
+        fi
     fi
 
 }
