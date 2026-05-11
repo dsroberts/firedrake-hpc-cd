@@ -78,7 +78,9 @@ function inner() {
     ### i2.) Install
     declare -a EXTRA_OPTS=()
     if [[ "${DO_64BIT}" ]]; then
-        export EXTRA_OPTS+=( "--with-64-bit-indices" )
+        EXTRA_OPTS+=( "--with-64-bit-indices" )
+    else
+        EXTRA_OPTS+=( "--download-parmmg" )
     fi
 
     cd "${APP_IN_CONTAINER_PATH}/${TAG}"
@@ -98,7 +100,7 @@ function inner() {
     ###  - HPC systems are expected to provide hwloc and zlib (--download-hwloc and --download-zlib replaced with --with-hwloc and --with-zlib)
     ###  - Flexibility when selecting fftw/blas/lapack/scalapack implementations. The per-system get_system_specific_flags function sets fftw/blas/lapack/scalapack options
     ###    Optimised libraries (MKL, BLIS, etc) will be preferred over reference implementations
-    "python${PY_VERSION}" ./configure PETSC_DIR="${APP_IN_CONTAINER_PATH}/${TAG}" PETSC_ARCH=default --with-cc="${MPICC}" --with-cxx="${MPICXX}" --with-fc="${MPIF90}" --with-mpiexec="${MPIEXEC}" COPTFLAGS="${COMPILER_OPT_FLAGS}" CXXOPTFLAGS="${COMPILER_OPT_FLAGS}" FOPTFLAGS="${COMPILER_OPT_FLAGS}" "${EXTRA_OPTS[@]}" --with-c2html=0 --with-debugging=0 --with-fortran-bindings=0 --with-shared-libraries=1 --with-strict-petscerrorcode --download-bison --download-hdf5 --with-hwloc --download-mumps --download-netcdf --download-pnetcdf --download-ptscotch --download-suitesparse --download-superlu_dist --with-zlib --download-hypre --download-eigen --download-metis --download-parmetis --download-mmg --download-parmmg "${SYSTEM_SPECIFIC_FLAGS[@]}" --with-make-np="${BUILD_NCPUS}"
+    "python${PY_VERSION}" ./configure PETSC_DIR="${APP_IN_CONTAINER_PATH}/${TAG}" PETSC_ARCH=default --with-cc="${MPICC}" --with-cxx="${MPICXX}" --with-fc="${MPIF90}" --with-mpiexec="${MPIEXEC}" COPTFLAGS="${COMPILER_OPT_FLAGS}" CXXOPTFLAGS="${COMPILER_OPT_FLAGS}" FOPTFLAGS="${COMPILER_OPT_FLAGS}" "${EXTRA_OPTS[@]}" --with-c2html=0 --with-debugging=0 --with-fortran-bindings=0 --with-shared-libraries=1 --with-strict-petscerrorcode --download-bison --download-hdf5 --with-hwloc --download-mumps --download-netcdf --download-pnetcdf --download-ptscotch --download-suitesparse --download-superlu_dist --with-zlib --download-hypre --download-eigen --download-metis --download-parmetis --download-mmg "${SYSTEM_SPECIFIC_FLAGS[@]}" --with-make-np="${BUILD_NCPUS}"
 
     make PETSC_DIR="${APP_IN_CONTAINER_PATH}/${TAG}" PETSC_ARCH=default all
 
