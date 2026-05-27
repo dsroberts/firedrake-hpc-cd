@@ -64,7 +64,7 @@ jobs:
         id: get_petsc_tag
         run: |
           if [[ ${{inputs.build_branch}} == "release" ]]; then
-            echo petsc_tag=$( ./firedrake/scripts/firedrake-configure --no-package-manager --petscver ) >> $GITHUB_OUTPUT
+            echo petsc_tag=$( ./firedrake/scripts/firedrake-configure --os unknown --show-petsc-version ) >> $GITHUB_OUTPUT
           else
             echo petsc_tag="main" >> $GITHUB_OUTPUT
           fi

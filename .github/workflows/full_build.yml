@@ -46,7 +46,7 @@ jobs:
       - name: Get petsc tag
         id: get_petsc_tag
         run: |
-          echo petsc_tag=$( ./firedrake/scripts/firedrake-configure --no-package-manager --petscver ) >> $GITHUB_OUTPUT
+          echo petsc_tag=$( ./firedrake/scripts/firedrake-configure --os unknown --show-petsc-version ) >> $GITHUB_OUTPUT
       - name: Checkout petsc
         uses: ./.github/actions/setup_app_source_gitlab
         with:
