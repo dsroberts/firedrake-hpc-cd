@@ -39,7 +39,7 @@ runs:
       shell: bash
       run: |
         pushd ${{ inputs.app }}
-        tag=$( git describe --tags $( git rev-list --tags ) 2>/dev/null | grep -v Zenodo | head -1 )
+        tag=$( git describe --tags $( git rev-list --remotes --tags ) 2>/dev/null | grep -v Zenodo | head -1 )
         git checkout "${tag}"
         git status
         popd
