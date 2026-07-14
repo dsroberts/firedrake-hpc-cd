@@ -43,7 +43,7 @@ if [[ $compiler_type == "gcc-native" ]]; then
         export SYSTEM_SPECIFIC_FLAGS=("--with-blas=1" "--download-scalapack")
     }
     ### Selected paths from pawseyenv module that allows access to openblas
-    export LMOD_CUSTOM_COMPILER_GNU_12_0_PREFIX="/software/setonix/2025.03/modules/zen3/gcc/13.3.0/utilities:/software/setonix/2025.03/modules/zen3/gcc/13.3.0/libraries:/software/setonix/2025.03/modules/zen3/gcc/13.3.0/programming-languages"
+    export LMOD_CUSTOM_COMPILER_GNU_12_0_PREFIX="/software/setonix/2025.08/modules/zen3/gcc/14.2.0/utilities:/software/setonix/2025.08/modules/zen3/gcc/14.2.0/programming-languages:/software/setonix/2025.08/modules/zen3/gcc/14.2.0/libraries"
     compiler_support_modules=( "openblas/0.3.28" )
     export CMAKE_ARGS+=' -DCMAKE_Fortran_FLAGS=-fallow-argument-mismatch'
 fi
