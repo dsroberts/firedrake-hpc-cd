@@ -14,7 +14,7 @@
 
 export MPI_MODULE=openmpi/4.0.7
 ### Must have numpy - no reason not to use NCI-provided modules
-export PY_MODULE=python3/3.11.7
+export PY_MODULE=python3/3.12.13
 export SINGULARITY_MODULE=singularity
 
 compiler_type=intel-compiler-llvm

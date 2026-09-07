@@ -13,7 +13,7 @@
 ###                     |                                 |   COMMON_MODULE_EXT
 
 export MPI_MODULE=cray-mpich/8.1.32
-export PY_MODULE=python/3.11.6
+export PY_MODULE=cray-python/3.12.12
 export SINGULARITY_MODULE=singularity/4.1.0-nohost
 
 compiler_type=gcc-native
@@ -32,7 +32,7 @@ export CMAKE_GENERATOR='Unix Makefiles'
 ### Define any compiler-specific things here
 if [[ $compiler_type == "gcc-native" ]]; then
     ### craype-x86-milan module should take care of CPU arch targeting
-    export PRGENV_MODULE="PrgEnv-gnu/8.6.0"
+    export PRGENV_MODULE="PrgEnv-gnu/8.7.0"
     ### Defer evaluation of this variables until the MKL module is loaded
     export COMPILER_OPT_FLAGS='-O3 -g'
     export VERSION_TAG="-gcc${compiler_version%%\.*}"
