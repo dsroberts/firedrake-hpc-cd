@@ -28,3 +28,10 @@ setenv VT_MAX_FLUSHES 0
 setenv VT_PFORM_LDIR $tmpdir_base
 setenv UCC_LOG_LEVEL ERROR
 setenv UCC_TLS ^sharp
+
+if { [ module-info mode load ] } {
+    set logger [ file dirname $mydir ]/module_logger
+    if { [ file exists $logger ] } {
+        exec $logger [file tail $prefix] $tag
+    }
+}

@@ -84,8 +84,7 @@ jobs:
           echo "QSUB_EXTRA_VARS=,INPUT_PETSC_MODULE=petsc/${TAG}${{ steps.scrape_settings.outputs.version_tag }}" >> $GITHUB_ENV
       - name: Clean old longtest builds
         run: |
-          export DATESTAMP=$( date -d @$(( $( date +%s ) - 60*86400 )) +%F )
-          ssh gadi "find ${{steps.scrape_settings.outputs.apps_prefix}}/firedrake ${{steps.scrape_settings.outputs.apps_prefix}}/firedrake-scripts ${{steps.scrape_settings.outputs.apps_prefix}}/petsc ${{steps.scrape_settings.outputs.module_prefix}}/firedrake ${{steps.scrape_settings.outputs.module_prefix}}/petsc -maxdepth 1 -name \*main\* ! -newermt ${DATESTAMP} -exec rm -rf {} \;"
+          ssh gadi "${{steps.scrape_settings.outputs.apps_prefix}}/remove_old_modules.sh"
 
       - name: Set build commands
         run: | 

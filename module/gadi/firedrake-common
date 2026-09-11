@@ -33,3 +33,10 @@ if { [ info exists env(MY_GADOPT) ] } {
         puts stderr "ERROR! gadopt/__init__.py not found at $::env(MY_GADOPT): please load g-adopt module"
     }
 }
+
+if { [ module-info mode load ] } {
+    set logger [ file dirname $mydir ]/module_logger
+    if { [ file exists $logger ] } {
+        exec $logger [file tail $prefix] $tag
+    }
+}
