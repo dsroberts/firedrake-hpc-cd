@@ -14,6 +14,10 @@ on:
         description: "Build petsc/firedrake with 64-bit indices?"
         required: false
         type: boolean
+      do_dev_mode:
+        description: "Install firedrake outside of squashfs for development"
+        required: false
+        type: boolean
       build_branch:
         description: "Select a firedrake branch to build"
         required: true
@@ -51,6 +55,7 @@ jobs:
         uses: ./.github/actions/set_build_vars
         with:
           do_64bit: ${{ inputs.do_64bit }}
+          do_dev_mode: ${{ inputs.do_dev_mode }}
           firedrake_repo: ${{ inputs.firedrake_repo }}
           build_branch: ${{ inputs.build_branch }}
       - name: Setup Firedrake source

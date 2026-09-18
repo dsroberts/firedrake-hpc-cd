@@ -74,6 +74,12 @@ export OVERLAY_EXTERNAL_PATH="${OVERLAY_BASE}/${APP_IN_CONTAINER_PATH#/*/}"
 export MODULE_FILE="${MODULE_PREFIX}/${APP_NAME}${APP_BUILD_TAG}/${TAG}${MODULE_SUFFIX}"
 export SQUASHFS_APP_DIR="${APP_NAME}${APP_BUILD_TAG}-${TAG}"
 
+if [[ "${DEV_MODE}" ]]; then
+    export REPO_EXTRACT_PATH="${APP_IN_CONTAINER_PATH}/ext/${TAG}/firedrake"
+else
+    export REPO_EXTRACT_PATH="${APP_IN_CONTAINER_PATH}/${TAG}/firedrake"
+fi
+
 [[ "${MODULE_USE_PATHS[@]}" ]] && module use "${MODULE_USE_PATHS[@]}"
 
 ### 3.) Load dependent modules
@@ -155,15 +161,18 @@ function inner() {
     source "${APP_IN_CONTAINER_PATH}/${TAG}/venv/bin/activate"
     if [[ "${BUILD_BRANCH}" ]] || [[ "${BRANCH}" == "main" ]]; then
         pip3 install "${PETSC_DIR}/src/binding/petsc4py"
-        pip3 install --no-binary mpi4py -r ./firedrake/requirements-build.txt
+        pip3 install --no-binary mpi4py -r "${REPO_EXTRACT_PATH}/requirements-build.txt"
         pip3 install wheel
         export PIP_EXTRA_ARG="--no-build-isolation"
+    fi
+    if [[ "${DEV_MODE}" ]]; then
+        export EDITABLE="-e"
     fi
     ### Cannot rely on compiler wrappers to correctly set RPATH
     ### for compiled petsc4py lib.
     export LD_LIBRARY_PATH_ORIG="${LD_LIBRARY_PATH}"
     export LD_LIBRARY_PATH="${PETSC_DIR}/${PETSC_ARCH}/lib:${LD_LIBRARY_PATH}"
-    pip3 install ${PIP_EXTRA_ARG} --no-binary h5py,mpi4py './firedrake[check]'
+    pip3 install ${PIP_EXTRA_ARG} --no-binary h5py,mpi4py ${EDITABLE} "${REPO_EXTRACT_PATH}"'[check]'
     ### Reset LD_LIBRARY_PATH so that the installation repair can correctly
     ### set petsc4py lib RPATH
     pip3 install jupyterlab assess gmsh imageio jupytext openpyxl pandas pyvista[all] shapely pyroltrilinos siphash24 jupyterview xarray trame_jupyter_extension pygplates ipympl matplotlib jax nbval ngsPETSc pylit pytest-split pytest-timeout pytest-xdist python-dateutil cartopy rasterio
@@ -227,7 +236,12 @@ fi
 copy_squash_to_overlay "${PETSC_SQUASHFS}" "${SQUASHFS_PATH}/petsc${APP_BUILD_TAG}-${PETSC_DIR_SUFFIX}" "${OVERLAY_EXTERNAL_PATH%/*}/petsc${APP_BUILD_TAG}/${PETSC_DIR_SUFFIX}"
 
 mkdir -p "${OVERLAY_EXTERNAL_PATH}/${TAG}"
-mv "${APP_NAME}" "${OVERLAY_EXTERNAL_PATH}/${TAG}"
+if [[ "${DEV_MODE}" ]]; then
+    mkdir -p "${OVERLAY_EXTERNAL_PATH}/ext/${TAG}"
+    mv "${APP_NAME}" "${OVERLAY_EXTERNAL_PATH}/ext/${TAG}"
+else
+    mv "${APP_NAME}" "${OVERLAY_EXTERNAL_PATH}/${TAG}"
+fi
 
 if [[ $(type -t __firedrake_pre_container_launch_hook) == function ]]; then
     __firedrake_pre_container_launch_hook
@@ -237,6 +251,10 @@ singularity -s exec --bind "${BIND_STR},${OVERLAY_BASE}:${first_dir}" "${BUILD_C
 
 ### 9.) Create squashfs
 mkdir -p "${SQUASHFS_PATH}"
+if [[ "${DEV_MODE}" ]]; then
+    mkdir -p "${APP_IN_CONTAINER_PATH}/ext"
+    mv "${OVERLAY_EXTERNAL_PATH}/ext/${TAG}" "${APP_IN_CONTAINER_PATH}/ext"
+fi
 mv "${OVERLAY_EXTERNAL_PATH}/${TAG}" "${SQUASHFS_PATH}/${SQUASHFS_APP_DIR}"
 
 if [[ $(type -t __firedrake_extra_squashfs_contents) == function ]]; then
