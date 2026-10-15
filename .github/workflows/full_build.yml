@@ -48,10 +48,9 @@ jobs:
         run: |
           echo petsc_tag=$( ./firedrake/scripts/firedrake-configure --os unknown --show-petsc-version ) >> $GITHUB_OUTPUT
       - name: Checkout petsc
-        uses: ./.github/actions/setup_app_source_gitlab
+        uses: ./.github/actions/setup_petsc
         with:
           system: ${{ matrix.system }}
-          app: petsc
           repo: petsc/petsc
           branch: ${{ steps.get_petsc_tag.outputs.petsc_tag }}
       - name: Setup G-ADOPT source

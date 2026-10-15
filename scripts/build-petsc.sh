@@ -109,7 +109,8 @@ function inner() {
     if [[ $(type -t __petsc_post_build_in_container_hook) == function ]]; then
         __petsc_post_build_in_container_hook
     fi
-
+    ### Remove extern directory after everything has succeeded
+    rm -rf "${APP_IN_CONTAINER_PATH}/${TAG}/extern"
 }
 
 ### 5.) Run inner function(s)

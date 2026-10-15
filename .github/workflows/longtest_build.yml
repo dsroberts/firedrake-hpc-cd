@@ -59,10 +59,9 @@ jobs:
           repo: firedrakeproject/firedrake
           branch: main
       - name: Checkout petsc
-        uses: ./.github/actions/setup_app_source_gitlab
+        uses: ./.github/actions/setup_petsc
         with:
           system: gadi
-          app: petsc
           repo: petsc/petsc
           branch: main
       - name: Set build variables

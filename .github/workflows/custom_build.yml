@@ -75,10 +75,9 @@ jobs:
           fi
       - name: Checkout petsc
         if: ${{ inputs.build_branch == 'main' || inputs.build_branch == 'release' }}
-        uses: ./.github/actions/setup_app_source_gitlab
+        uses: ./.github/actions/setup_petsc
         with:
           system: ${{ inputs.system }}
-          app: petsc
           repo: petsc/petsc
           branch: ${{ steps.get_petsc_tag.outputs.petsc_tag }}
       - name: Set build commands

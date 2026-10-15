@@ -3,8 +3,6 @@ description: Prepare a PETSc and dependencies for offline build on HPC system
 inputs:
   system:
     required: true
-  app:
-    required: true
   repo:
     required: true
   branch:
@@ -22,8 +20,8 @@ runs:
     - name: Initialising repository
       shell: bash
       run: |
-        git init ${{ inputs.app }}
-        pushd ${{ inputs.app }}
+        git init petsc
+        pushd petsc
         git remote add origin https://gitlab.com/${{ inputs.repo }}.git
         git -c protocol.version=2 fetch --prune --no-recurse-submodules --depth=1 origin +refs/heads/${{inputs.branch}}*:refs/remotes/origin/${{inputs.branch}}* +refs/tags/${{inputs.branch}}*:refs/tags/${{inputs.branch}}*
         git checkout ${{ inputs.branch }}
@@ -33,12 +31,17 @@ runs:
       run: |
         source scripts/${{inputs.system}}/build-config.sh
         get_system_specific_petsc_flags
-        pushd ${{ inputs.app }}
+        pushd petsc
         declare -a dl_args=()
+        # Recover all arguments to PETSc configure that begin with --download-
         for a in eval echo $( grep './configure' ../scripts/build-petsc.sh ); do
             [[ "${a}" =~ ^\-\-download\- ]] && dl_args+=( "${a}" )
         done
         mkdir -p "${PWD}/extern"
+        # When PETSc configure is run with --with-packages-download-dir and --download-* options
+        # it prints a list of package URL/git clone commands in an almost machine readable form
+        # Parse this output and recover the external packages to the 'extern' subdirectory which
+        # will be packaged with the PETSc tarfile to be sent to the HPC system.
         while read pkg urls; do
             [[ "${pkg}" ]] || continue && true
             [[ "${pkg}" == "Download" ]] && continue
@@ -61,11 +64,11 @@ runs:
             # Cheat a little bit and add parmmg manually
         done < <( python3 ./configure PETSC_DIR="${PWD}" PETSC_ARCH=default --with-packages-download-dir="${PWD}/extern" "${dl_args[@]}" --download-parmmg )
         popd
-    - name: Package ${{ inputs.app }}
+    - name: Package PETSc
       shell: bash
       run: |
-        tar -cf ${{ inputs.app }}.tar ${{ inputs.app }}
-    - name: Sync ${{ inputs.app }} to ${{ inputs.system }}
+        tar -cf petsc.tar petsc
+    - name: Sync PETSc to ${{ inputs.system }}
       shell: bash
       run: |
-        scp ${{ inputs.app }}.tar ${{inputs.system}}:${{steps.scrape_settings.outputs.build_stage_dir}}/
+        scp petsc.tar ${{inputs.system}}:${{steps.scrape_settings.outputs.build_stage_dir}}/
