@@ -13,6 +13,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
       - name: Setup ssh
         uses: ./.github/actions/setup_ssh
         env:
@@ -23,13 +27,12 @@ jobs:
           system: gadi
       - name: Transfer ${{ github.event.repository.name }} repo
         uses: ./.github/actions/prepare_and_transfer_repo
-
         with:
           system: gadi
       - name: Set build variables
         uses: ./.github/actions/set_build_vars
       - name: Checkout petsc
-        uses: ./.github/actions/setup_app_source_gitlab
+        uses: ./.github/actions/setup_petsc
         with:
           system: gadi
           app: petsc
