@@ -1,0 +1,37 @@
+name: Send PETSc
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    env:
+      REPO_PATH: ${{ secrets['GADI_REPO_PATH'] }}
+      PETSC_TAG: "main"
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+      - name: Setup ssh
+        uses: ./.github/actions/setup_ssh
+        env:
+          TEST_KEY: ${{ secrets['GADI_TESTING_KEY'] }}
+          HOST_KEY: ${{ secrets['GADI_HOST_KEY'] }}
+          USER: ${{ secrets['GADI_USER'] }}
+        with:
+          system: gadi
+      - name: Transfer ${{ github.event.repository.name }} repo
+        uses: ./.github/actions/prepare_and_transfer_repo
+
+        with:
+          system: gadi
+      - name: Set build variables
+        uses: ./.github/actions/set_build_vars
+      - name: Checkout petsc
+        uses: ./.github/actions/setup_app_source_gitlab
+        with:
+          system: gadi
+          app: petsc
+          repo: petsc/petsc
+          branch: main
